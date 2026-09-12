@@ -1,12 +1,20 @@
 import { _ } from '@sveltia/i18n';
 
 import { customComponentRegistry } from '$lib/services/api/registries';
+import {
+  ALL_HUGO_COMPONENTS,
+  HUGO_COMPONENT_NAMES,
+} from '$lib/services/contents/fields/rich-text/components/hugo';
 import { replaceQuotes } from '$lib/services/contents/fields/rich-text/components/utils';
 import {
   IMAGE_OR_LINKED_IMAGE_REGEX,
   IMAGE_REGEX,
 } from '$lib/services/contents/fields/rich-text/constants';
 import { escapeAttr } from '$lib/services/utils/string';
+
+export { ALL_HUGO_COMPONENTS, HUGO_COMPONENT_NAMES };
+
+const hugoComponentMap = new Map(ALL_HUGO_COMPONENTS.map((def) => [def.id, def]));
 
 /**
  * @import { EditorComponentDefinition } from '$lib/types/public';
@@ -125,6 +133,12 @@ export const getComponentDef = (name) => {
     // Add a prefix to the component ID to avoid conflicts with built-in components and Lexical’s
     // built-in node types, such as `code`.
     return { ...customComponentDef, id: `x-${name}` };
+  }
+
+  const hugoComponentDef = hugoComponentMap.get(name);
+
+  if (hugoComponentDef) {
+    return hugoComponentDef;
   }
 
   // Common props with localized labels

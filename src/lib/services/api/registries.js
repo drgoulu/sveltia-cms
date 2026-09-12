@@ -1,3 +1,5 @@
+import { SvelteMap, SvelteSet } from 'svelte/reactivity';
+
 /**
  * @import { CustomFileFormat } from '$lib/types/private';
  * @import {
@@ -16,7 +18,7 @@
  * @see https://decapcms.org/docs/custom-widgets/#registereditorcomponent
  * @see https://sveltiacms.app/en/docs/api/editor-components
  */
-export const customComponentRegistry = new Map();
+export const customComponentRegistry = new SvelteMap();
 
 /**
  * Custom field types registered using the `CMS.registerField` API.
@@ -25,7 +27,7 @@ export const customComponentRegistry = new Map();
  * @see https://decapcms.org/docs/custom-widgets/#registerwidget
  * @see https://sveltiacms.app/en/docs/api/field-types
  */
-export const customFieldTypeRegistry = new Map();
+export const customFieldTypeRegistry = new SvelteMap();
 
 /**
  * Custom file formats registered using the `CMS.registerFileFormat` API.
@@ -33,7 +35,7 @@ export const customFieldTypeRegistry = new Map();
  * @see https://decapcms.org/docs/custom-formatters/
  * @see https://sveltiacms.app/en/docs/api/file-formats
  */
-export const customFileFormatRegistry = new Map();
+export const customFileFormatRegistry = new SvelteMap();
 
 /**
  * Custom entry preview stylesheet URLs registered with the `CMS.registerPreviewStyle` API.
@@ -41,7 +43,7 @@ export const customFileFormatRegistry = new Map();
  * @see https://decapcms.org/docs/customization/#registerpreviewstyle
  * @see https://sveltiacms.app/en/docs/api/preview-styles
  */
-export const customPreviewStyleRegistry = new Set();
+export const customPreviewStyleRegistry = new SvelteSet();
 
 /**
  * Custom entry preview templates registered with the `CMS.registerPreviewTemplate` API.
@@ -49,7 +51,7 @@ export const customPreviewStyleRegistry = new Set();
  * @see https://decapcms.org/docs/customization/#registerpreviewtemplate
  * @see https://sveltiacms.app/en/docs/api/preview-templates
  */
-export const customPreviewTemplateRegistry = new Map();
+export const customPreviewTemplateRegistry = new SvelteMap();
 
 /**
  * Custom event listeners registered with the `CMS.registerEventListener` API.
@@ -57,4 +59,4 @@ export const customPreviewTemplateRegistry = new Map();
  * @see https://decapcms.org/docs/registering-events/
  * @see https://sveltiacms.app/en/docs/api/events
  */
-export const eventHookRegistry = new Set();
+export const eventHookRegistry = new SvelteSet();

@@ -18,7 +18,7 @@
   import { cmsConfig } from '$lib/services/config';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { BUILTIN_COMPONENTS } from '$lib/services/contents/fields/rich-text';
-  import { getComponentDef } from '$lib/services/contents/fields/rich-text/components/definitions';
+  import { getComponentDef, HUGO_COMPONENT_NAMES } from '$lib/services/contents/fields/rich-text/components/definitions';
   import {
     buildMarkdownWithPreviews,
     COMPONENT_QUERY_SELECTOR,
@@ -104,13 +104,19 @@
       [...BUILTIN_COMPONENTS, ...customComponentRegistry.keys()],
     linked_images: linkedImagesEnabled = defaultConfig.linked_images ?? true,
   } = $derived(fieldConfig);
-  const componentDefs = $derived(
-    _editorComponents
+  const componentDefs = $derived.by(() => {
+    const componentNames = new Set([
+      ..._editorComponents,
+      ...HUGO_COMPONENT_NAMES,
+      ...customComponentRegistry.keys(),
+    ]);
+
+    return [...componentNames]
       .map((name) =>
         getComponentDef(name === 'image' && linkedImagesEnabled ? 'linked-image' : name),
       )
-      .filter((def) => !!def),
-  );
+      .filter((def) => !!def);
+  });
 
   const markdown = $derived.by(() => {
     if (typeof currentValue !== 'string' || !currentValue.trim()) {
@@ -414,6 +420,33 @@
 
       pre.shiki {
         background-color: var(--sui-code-background-color) !important;
+      }
+
+      figure {
+        margin: 1.5em 0;
+
+        &.alignleft {
+          float: left;
+          margin: 0.5em 1.5em 1em 0;
+        }
+
+        &.alignright {
+          float: right;
+          margin: 0.5em 0 1em 1.5em;
+        }
+
+        &.aligncenter {
+          margin: 1.5em auto;
+          display: table;
+          clear: both;
+        }
+
+        figcaption {
+          font-size: 0.875em;
+          color: var(--sui-secondary-foreground-color, #64748b);
+          margin-top: 0.5em;
+          text-align: center;
+        }
       }
     }
   }
