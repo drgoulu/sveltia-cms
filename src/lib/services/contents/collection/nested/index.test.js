@@ -388,9 +388,10 @@ describe('isNestedFolder()', () => {
 
   test('rejects any folder in a collection that isn’t nested', () => {
     const flatCollection = { name: 'pages', folder: 'content/pages' };
+    const flatEntries = [entry('about'), entry('contact')];
 
-    expect(isNestedFolder({ collection: flatCollection, entries, dirPath: 'docs' })).toBe(false);
-    expect(isNestedFolder({ collection: flatCollection, entries, dirPath: '' })).toBe(false);
+    expect(isNestedFolder({ collection: flatCollection, entries: flatEntries, dirPath: 'docs' })).toBe(false);
+    expect(isNestedFolder({ collection: flatCollection, entries: flatEntries, dirPath: '' })).toBe(false);
   });
 });
 
@@ -404,10 +405,11 @@ describe('filterNestedEntries()', () => {
     entry('docs/guides/deep/_index'),
   ];
 
-  test('returns the entries as is for a regular collection', () => {
+  test('returns the entries as is for a regular collection without subfolders', () => {
     const collection = { name: 'pages', folder: 'content/pages' };
+    const flatEntries = [entry('about'), entry('contact')];
 
-    expect(filterNestedEntries({ collection, entries, dirPath: 'docs' })).toBe(entries);
+    expect(filterNestedEntries({ collection, entries: flatEntries, dirPath: 'docs' })).toBe(flatEntries);
   });
 
   describe('with subfolders', () => {
@@ -443,20 +445,51 @@ describe('filterNestedEntries()', () => {
 
     const flatEntries = [entry('about'), entry('docs/intro'), entry('docs/guides/deep')];
 
-    test('lists the files directly in the root folder', () => {
+    test('lists all files when browsing the root folder', () => {
       expect(
         filterNestedEntries({ collection, entries: flatEntries, dirPath: '' }).map(
           ({ subPath }) => subPath,
         ),
-      ).toEqual(['about']);
+      ).toEqual(['about', 'docs/intro', 'docs/guides/deep']);
     });
 
-    test('lists the files directly in a folder', () => {
+    test('lists the files in the folder and its subfolders', () => {
       expect(
         filterNestedEntries({ collection, entries: flatEntries, dirPath: 'docs' }).map(
           ({ subPath }) => subPath,
         ),
-      ).toEqual(['docs/intro']);
+      ).toEqual(['docs/intro', 'docs/guides/deep']);
+    });
+  });
+
+  describe('unconfigured collection with subfolder entries', () => {
+    const collection = { name: 'posts', folder: 'content/posts' };
+    const posts = [
+      entry('2012/post1'),
+      entry('2012/sub/post2'),
+      entry('2026/post3'),
+    ];
+
+    test('lists all posts when browsing the root folder', () => {
+      expect(
+        filterNestedEntries({ collection, entries: posts, dirPath: '' }).map(
+          ({ subPath }) => subPath,
+        ),
+      ).toEqual(['2012/post1', '2012/sub/post2', '2026/post3']);
+    });
+
+    test('lists only the posts in the selected folder and its descendants', () => {
+      expect(
+        filterNestedEntries({ collection, entries: posts, dirPath: '2012' }).map(
+          ({ subPath }) => subPath,
+        ),
+      ).toEqual(['2012/post1', '2012/sub/post2']);
+
+      expect(
+        filterNestedEntries({ collection, entries: posts, dirPath: '2012/sub' }).map(
+          ({ subPath }) => subPath,
+        ),
+      ).toEqual(['2012/sub/post2']);
     });
   });
 });

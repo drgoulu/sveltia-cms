@@ -134,7 +134,7 @@ const getNodeLabel = ({ collection, path, indexEntry, summaryTemplate, locale })
  * is not a nested collection or has no folder to show.
  */
 const buildTree = ({ collection, entries, pruneLeaves, excludePath, locale }) => {
-  const config = getNestedConfig(collection);
+  const config = getNestedConfig(collection, entries);
 
   if (!config) {
     return [];

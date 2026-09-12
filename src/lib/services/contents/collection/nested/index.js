@@ -74,7 +74,7 @@ export const nestedFilterPath = createRawState('');
  * nested entry collection.
  * @see https://decapcms.org/docs/collection-nested/
  */
-export const getNestedConfig = (collection) => {
+export const getNestedConfig = (collection, entries = undefined) => {
   const rawCollection = /** @type {Collection} */ (collection);
 
   if (!isEntryCollection(rawCollection)) {
@@ -83,25 +83,35 @@ export const getNestedConfig = (collection) => {
 
   const { nested } = rawCollection;
 
-  if (!nested || typeof nested !== 'object') {
-    return undefined;
+  if (nested && typeof nested === 'object') {
+    const { depth, summary, subfolders } = nested;
+
+    return {
+      depth: typeof depth === 'number' && depth >= 1 ? Math.floor(depth) : Infinity,
+      summary: typeof summary === 'string' && !!summary.trim() ? summary : undefined,
+      subfolders: subfolders !== false,
+    };
   }
 
-  const { depth, summary, subfolders } = nested;
+  if (entries?.some((entry) => entry.subPath?.includes('/'))) {
+    return {
+      depth: Infinity,
+      summary: undefined,
+      subfolders: false,
+    };
+  }
 
-  return {
-    depth: typeof depth === 'number' && depth >= 1 ? Math.floor(depth) : Infinity,
-    summary: typeof summary === 'string' && !!summary.trim() ? summary : undefined,
-    subfolders: subfolders !== false,
-  };
+  return undefined;
 };
 
 /**
  * Check if the given collection is a nested collection.
  * @param {Collection | InternalCollection} collection Collection.
+ * @param {Entry[]} [entries] Optional entries to check if not yet registered in collection.
  * @returns {boolean} Result.
  */
-export const isNestedCollection = (collection) => !!getNestedConfig(collection);
+export const isNestedCollection = (collection, entries = undefined) =>
+  !!getNestedConfig(collection, entries);
 
 /**
  * Get the normalized options for the `meta.path` entry path editor, which lets the user choose
@@ -237,7 +247,7 @@ export const isDescendantPath = (dirPath, subPath) => !dirPath || subPath.starts
  * folders to browse.
  */
 export const isNestedFolder = ({ collection, entries, dirPath }) => {
-  if (!isNestedCollection(collection)) {
+  if (!isNestedCollection(collection, entries)) {
     return false;
   }
 
@@ -264,7 +274,7 @@ export const isNestedFolder = ({ collection, entries, dirPath }) => {
  * not a nested collection.
  */
 export const filterNestedEntries = ({ collection, entries, dirPath }) => {
-  const config = getNestedConfig(collection);
+  const config = getNestedConfig(collection, entries);
 
   if (!config) {
     return entries;
@@ -273,19 +283,26 @@ export const filterNestedEntries = ({ collection, entries, dirPath }) => {
   const { subfolders } = config;
   const basePath = stripSlashes(dirPath);
 
+  if (!basePath) {
+    if (subfolders) {
+      return entries.filter(({ subPath }) => subPath.split('/').length <= 2);
+    }
+
+    return entries;
+  }
+
   return entries.filter(({ subPath }) => {
     if (!isDescendantPath(basePath, subPath)) {
       return false;
     }
 
-    const restPath = basePath ? subPath.slice(basePath.length + 1) : subPath;
-    const depth = restPath.split('/').length;
-
     if (subfolders) {
-      // At the root, also list the collection’s own index file, which has no folder of its own
-      return basePath ? depth === 2 : depth <= 2;
+      const restPath = subPath.slice(basePath.length + 1);
+      const depth = restPath.split('/').length;
+
+      return depth === 2;
     }
 
-    return depth === 1;
+    return true;
   });
 };

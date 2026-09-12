@@ -35,6 +35,7 @@
     getCollectionFileLabel,
   } from '$lib/services/contents/collection/files';
   import {
+    getEntryDirPath,
     getMetaPathConfig,
     isNestedFolder,
     nestedFilterPath,
@@ -199,10 +200,12 @@
     }
 
     // A nested collection’s folder is browsed at `/collections/{name}/filter/{path}`, while the
-    // collection route itself always shows the root folder. The editor routes leave the folder
-    // alone, so closing the editor returns the user to where they were.
+    // collection route itself always shows the root folder. When an entry is opened, select its
+    // containing subfolder in the tree so the user sees where it lives.
     if (routeType === 'filter' || !routeType) {
       nestedFilterPath.current = routeType === 'filter' ? (subPath ?? '') : '';
+    } else if (routeType === 'entries' && subPath) {
+      nestedFilterPath.current = getEntryDirPath(subPath);
     }
 
     if (!routeType || routeType === 'filter') {

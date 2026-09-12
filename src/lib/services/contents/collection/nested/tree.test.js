@@ -27,6 +27,12 @@ vi.mock('$lib/services/contents/entry/summary', () => ({
  */
 const entry = (subPath, title) => ({ subPath, title });
 
+const node = (path, children = []) => ({
+  path,
+  label: path.slice(path.lastIndexOf('/') + 1),
+  children,
+});
+
 beforeEach(() => {
   vi.mocked(isEntryCollection).mockImplementation(
     (collection) => typeof collection?.folder === 'string' && !Array.isArray(collection?.files),
@@ -35,10 +41,24 @@ beforeEach(() => {
 });
 
 describe('getNestedTree()', () => {
-  test('returns an empty array for a regular collection', () => {
+  test('returns an empty array for a flat collection', () => {
     const collection = { name: 'pages', folder: 'content/pages' };
 
-    expect(getNestedTree({ collection, entries: [entry('about/_index')] })).toEqual([]);
+    expect(getNestedTree({ collection, entries: [entry('about')] })).toEqual([]);
+  });
+
+  test('builds tree for a collection with subfolders even without nested config', () => {
+    const collection = { name: 'posts', folder: 'content/posts' };
+    const entries = [
+      entry('2012/my-first-post'),
+      entry('2026/future-post'),
+      entry('2026/travel/trip-post'),
+    ];
+
+    expect(getNestedTree({ collection, entries })).toEqual([
+      node('2012'),
+      node('2026', [node('2026/travel')]),
+    ]);
   });
 
   describe('with subfolders', () => {
@@ -228,7 +248,7 @@ describe('getParentFolderTree()', () => {
     expect(
       getParentFolderTree({
         collection: { name: 'pages', folder: 'content/pages' },
-        entries: [entry('about/_index')],
+        entries: [entry('about')],
       }),
     ).toEqual([]);
   });
