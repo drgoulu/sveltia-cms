@@ -63,6 +63,16 @@ export const scanEntry = ({ entry, terms, normalizedValueCache = undefined }) =>
     points += 10;
   }
 
+  // Check if the entry subPath or file path matches (enables searching by subfolder/filename)
+  if (entry.subPath && hasMatch({ value: entry.subPath, terms, normalizedValueCache: entryValueCache })) {
+    points += 5;
+  }
+  Object.values(entry.locales).forEach(({ path: filePath }) => {
+    if (filePath && hasMatch({ value: filePath, terms, normalizedValueCache: entryValueCache })) {
+      points += 5;
+    }
+  });
+
   // Check if the entry content matches
   Object.entries(entry.locales).forEach(([_locale, { content }]) => {
     points += Object.entries(content).filter(([_keyPath, value]) => {

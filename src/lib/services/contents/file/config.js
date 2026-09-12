@@ -87,12 +87,8 @@ export const detectFileFormat = ({ extension, format }) => {
  */
 const getFilePathMatcher = (subPath, indexFileName, nestedDepth) => {
   if (!subPath) {
-    if (nestedDepth === undefined) {
-      return '(?<subPath>[^/]+?)';
-    }
-
     // An entry can be stored in any folder below the collection folder, down to the configured
-    // depth. The depth is the number of path segments, the last of which is the file name.
+    // depth. If nestedDepth is undefined, match all subfolders at any depth.
     const extraSegments = Number.isFinite(nestedDepth)
       ? `{0,${Math.max(0, nestedDepth - 1)}}`
       : '*';

@@ -114,7 +114,7 @@
       <link rel="manifest" href={appManifestURL.current} />
     {/if}
   {/if}
-  {#if DEV_SITE_URL}
+  {#if DEV_SITE_URL && typeof document !== 'undefined' && !document.querySelector('link[rel="cms-config-url"]')}
     <link href="{DEV_SITE_URL}/admin/config.yml" type="application/yaml" rel="cms-config-url" />
   {/if}
 </svelte:head>
