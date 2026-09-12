@@ -139,7 +139,7 @@ describe('Test getEntryPathRegEx()', () => {
       _i18n,
     });
 
-    expect(regex.source).toBe('^content\\/posts\\/(?<subPath>[^/]+?)\\.md$');
+    expect(regex.source).toBe('^content\\/posts\\/(?<subPath>[^/]+?(?:\\/[^/]+?)*)\\.md$');
     expect('content/posts/my-post.md'.match(regex)?.groups?.subPath).toBe('my-post');
   });
 
@@ -319,7 +319,7 @@ describe('Test getEntryPathRegEx()', () => {
       _i18n,
     });
 
-    expect(regex.source).toBe('^content\\/posts\\/(?<subPath>[^/]+?)\\.(?<locale>en|fr)\\.md$');
+    expect(regex.source).toBe('^content\\/posts\\/(?<subPath>[^/]+?(?:\\/[^/]+?)*)\\.(?<locale>en|fr)\\.md$');
     expect('content/posts/my-post.en.md'.match(regex)?.groups?.locale).toBe('en');
     expect('content/posts/my-post.fr.md'.match(regex)?.groups?.locale).toBe('fr');
   });
@@ -344,7 +344,7 @@ describe('Test getEntryPathRegEx()', () => {
       _i18n,
     });
 
-    expect(regex.source).toBe('^content\\/posts\\/(?<subPath>[^/]+?)(?:\\.(?<locale>fr))?\\.md$');
+    expect(regex.source).toBe('^content\\/posts\\/(?<subPath>[^/]+?(?:\\/[^/]+?)*)(?:\\.(?<locale>fr))?\\.md$');
     expect('content/posts/my-post.md'.match(regex)?.groups?.locale).toBeUndefined();
     expect('content/posts/my-post.fr.md'.match(regex)?.groups?.locale).toBe('fr');
   });
@@ -368,7 +368,7 @@ describe('Test getEntryPathRegEx()', () => {
       _i18n,
     });
 
-    expect(regex.source).toBe('^content\\/posts\\/(?<locale>en|fr)\\/(?<subPath>[^/]+?)\\.md$');
+    expect(regex.source).toBe('^content\\/posts\\/(?<locale>en|fr)\\/(?<subPath>[^/]+?(?:\\/[^/]+?)*)\\.md$');
     expect('content/posts/en/my-post.md'.match(regex)?.groups?.locale).toBe('en');
     expect('content/posts/fr/my-post.md'.match(regex)?.groups?.locale).toBe('fr');
   });
@@ -392,7 +392,7 @@ describe('Test getEntryPathRegEx()', () => {
       _i18n,
     });
 
-    expect(regex.source).toBe('^(?<locale>en|fr)\\/content\\/posts\\/(?<subPath>[^/]+?)\\.md$');
+    expect(regex.source).toBe('^(?<locale>en|fr)\\/content\\/posts\\/(?<subPath>[^/]+?(?:\\/[^/]+?)*)\\.md$');
     expect('en/content/posts/my-post.md'.match(regex)?.groups?.locale).toBe('en');
     expect('fr/content/posts/my-post.md'.match(regex)?.groups?.locale).toBe('fr');
   });
@@ -416,7 +416,7 @@ describe('Test getEntryPathRegEx()', () => {
       _i18n,
     });
 
-    expect(regex.source).toBe('^(?<subPath>[^/]+?)\\.md$');
+    expect(regex.source).toBe('^(?<subPath>[^/]+?(?:\\/[^/]+?)*)\\.md$');
     expect('my-post.md'.match(regex)?.groups?.subPath).toBe('my-post');
   });
 
@@ -528,7 +528,7 @@ describe('Test getEntryPathRegEx()', () => {
     });
 
     // Locale folder becomes optional, allowing both 'en/...' and '...' patterns
-    expect(regex.source).toBe('^content\\/posts\\/(?:(?<locale>fr)\\/)?(?<subPath>[^/]+?)\\.md$');
+    expect(regex.source).toBe('^content\\/posts\\/(?:(?<locale>fr)\\/)?(?<subPath>[^/]+?(?:\\/[^/]+?)*)\\.md$');
     // Default locale (en) - no folder
     expect('content/posts/my-post.md'.match(regex)?.groups?.locale).toBeUndefined();
     expect('content/posts/my-post.md'.match(regex)?.groups?.subPath).toBe('my-post');
@@ -558,7 +558,7 @@ describe('Test getEntryPathRegEx()', () => {
     });
 
     // Root locale folder becomes optional, allowing both 'en/...' and '...' patterns
-    expect(regex.source).toBe('^(?:(?<locale>fr)\\/)?content\\/posts\\/(?<subPath>[^/]+?)\\.md$');
+    expect(regex.source).toBe('^(?:(?<locale>fr)\\/)?content\\/posts\\/(?<subPath>[^/]+?(?:\\/[^/]+?)*)\\.md$');
     // Default locale (en) - no root folder
     expect('content/posts/my-post.md'.match(regex)?.groups?.locale).toBeUndefined();
     expect('content/posts/my-post.md'.match(regex)?.groups?.subPath).toBe('my-post');
@@ -751,11 +751,12 @@ describe('Test getFileConfig()', () => {
         _i18n: i18nDisabled,
       }),
     ).toEqual({
+      bodyField: undefined,
       extension: 'md',
       format: 'frontmatter',
       basePath: 'content/posts',
       subPath: undefined,
-      fullPathRegEx: /^content\/posts\/(?<subPath>[^/]+?)\.md$/,
+      fullPathRegEx: /^content\/posts\/(?<subPath>[^/]+?(?:\/[^/]+?)*)\.md$/,
       fullPath: undefined,
       fmDelimiters: undefined,
       yamlQuote: false,
@@ -770,6 +771,7 @@ describe('Test getFileConfig()', () => {
         _i18n: i18nDisabled,
       }),
     ).toEqual({
+      bodyField: undefined,
       extension: 'md',
       format: 'frontmatter',
       basePath: 'content/posts',
@@ -790,6 +792,7 @@ describe('Test getFileConfig()', () => {
         _i18n: i18nDisabled,
       }),
     ).toEqual({
+      bodyField: undefined,
       extension: 'md',
       format: 'yaml-frontmatter',
       basePath: 'content/posts',
@@ -814,7 +817,7 @@ describe('Test getFileConfig()', () => {
       format: 'yaml',
       basePath: 'content/posts',
       subPath: undefined,
-      fullPathRegEx: /^content\/posts\/(?<subPath>[^/]+?)\.yml$/,
+      fullPathRegEx: /^content\/posts\/(?<subPath>[^/]+?(?:\/[^/]+?)*)\.yml$/,
       fullPath: undefined,
       fmDelimiters: undefined,
       yamlQuote: true,
@@ -833,7 +836,7 @@ describe('Test getFileConfig()', () => {
       format: 'json',
       basePath: 'content/posts',
       subPath: undefined,
-      fullPathRegEx: /^content\/posts\/(?<subPath>[^/]+?)\.json$/,
+      fullPathRegEx: /^content\/posts\/(?<subPath>[^/]+?(?:\/[^/]+?)*)\.json$/,
       fullPath: undefined,
       fmDelimiters: undefined,
       yamlQuote: false,
@@ -853,7 +856,7 @@ describe('Test getFileConfig()', () => {
       format: 'frontmatter',
       basePath: 'content/posts',
       subPath: undefined,
-      fullPathRegEx: /^content\/posts\/(?<subPath>[^/]+?)\.md$/,
+      fullPathRegEx: /^content\/posts\/(?<subPath>[^/]+?(?:\/[^/]+?)*)\.md$/,
       fullPath: undefined,
       fmDelimiters: undefined,
       yamlQuote: false,
@@ -868,6 +871,7 @@ describe('Test getFileConfig()', () => {
         _i18n: i18nSingleFile,
       }),
     ).toEqual({
+      bodyField: undefined,
       extension: 'md',
       format: 'frontmatter',
       basePath: 'content/posts',
@@ -888,6 +892,7 @@ describe('Test getFileConfig()', () => {
         _i18n: i18nSingleFile,
       }),
     ).toEqual({
+      bodyField: undefined,
       extension: 'md',
       format: 'yaml-frontmatter',
       basePath: 'content/posts',
@@ -912,7 +917,7 @@ describe('Test getFileConfig()', () => {
       format: 'yaml',
       basePath: 'content/posts',
       subPath: undefined,
-      fullPathRegEx: /^content\/posts\/(?<subPath>[^/]+?)\.yml$/,
+      fullPathRegEx: /^content\/posts\/(?<subPath>[^/]+?(?:\/[^/]+?)*)\.yml$/,
       fullPath: undefined,
       fmDelimiters: undefined,
       yamlQuote: true,
@@ -931,7 +936,7 @@ describe('Test getFileConfig()', () => {
       format: 'json',
       basePath: 'content/posts',
       subPath: undefined,
-      fullPathRegEx: /^content\/posts\/(?<subPath>[^/]+?)\.json$/,
+      fullPathRegEx: /^content\/posts\/(?<subPath>[^/]+?(?:\/[^/]+?)*)\.json$/,
       fullPath: undefined,
       fmDelimiters: undefined,
       yamlQuote: false,
@@ -951,7 +956,7 @@ describe('Test getFileConfig()', () => {
       format: 'frontmatter',
       basePath: 'content/posts',
       subPath: undefined,
-      fullPathRegEx: /^content\/posts\/(?<subPath>[^/]+?)\.(?<locale>en|fr)\.md$/,
+      fullPathRegEx: /^content\/posts\/(?<subPath>[^/]+?(?:\/[^/]+?)*)\.(?<locale>en|fr)\.md$/,
       fullPath: undefined,
       fmDelimiters: undefined,
       yamlQuote: false,
@@ -966,6 +971,7 @@ describe('Test getFileConfig()', () => {
         _i18n: i18nMultiFile,
       }),
     ).toEqual({
+      bodyField: undefined,
       extension: 'md',
       format: 'frontmatter',
       basePath: 'content/posts',
@@ -986,6 +992,7 @@ describe('Test getFileConfig()', () => {
         _i18n: i18nMultiFile,
       }),
     ).toEqual({
+      bodyField: undefined,
       extension: 'md',
       format: 'yaml-frontmatter',
       basePath: 'content/posts',
@@ -1010,7 +1017,7 @@ describe('Test getFileConfig()', () => {
       format: 'yaml',
       basePath: 'content/posts',
       subPath: undefined,
-      fullPathRegEx: /^content\/posts\/(?<subPath>[^/]+?)\.(?<locale>en|fr)\.yml$/,
+      fullPathRegEx: /^content\/posts\/(?<subPath>[^/]+?(?:\/[^/]+?)*)\.(?<locale>en|fr)\.yml$/,
       fullPath: undefined,
       fmDelimiters: undefined,
       yamlQuote: true,
@@ -1029,7 +1036,7 @@ describe('Test getFileConfig()', () => {
       format: 'json',
       basePath: 'content/posts',
       subPath: undefined,
-      fullPathRegEx: /^content\/posts\/(?<subPath>[^/]+?)\.(?<locale>en|fr)\.json$/,
+      fullPathRegEx: /^content\/posts\/(?<subPath>[^/]+?(?:\/[^/]+?)*)\.(?<locale>en|fr)\.json$/,
       fullPath: undefined,
       fmDelimiters: undefined,
       yamlQuote: false,
@@ -1049,7 +1056,7 @@ describe('Test getFileConfig()', () => {
       format: 'frontmatter',
       basePath: 'content/posts',
       subPath: undefined,
-      fullPathRegEx: /^content\/posts\/(?<locale>en|fr)\/(?<subPath>[^/]+?)\.md$/,
+      fullPathRegEx: /^content\/posts\/(?<locale>en|fr)\/(?<subPath>[^/]+?(?:\/[^/]+?)*)\.md$/,
       fullPath: undefined,
       fmDelimiters: undefined,
       yamlQuote: false,
@@ -1064,6 +1071,7 @@ describe('Test getFileConfig()', () => {
         _i18n: i18nMultiFolder,
       }),
     ).toEqual({
+      bodyField: undefined,
       extension: 'md',
       format: 'frontmatter',
       basePath: 'content/posts',
@@ -1084,6 +1092,7 @@ describe('Test getFileConfig()', () => {
         _i18n: i18nMultiFolder,
       }),
     ).toEqual({
+      bodyField: undefined,
       extension: 'md',
       format: 'yaml-frontmatter',
       basePath: 'content/posts',
@@ -1108,7 +1117,7 @@ describe('Test getFileConfig()', () => {
       format: 'yaml',
       basePath: 'content/posts',
       subPath: undefined,
-      fullPathRegEx: /^content\/posts\/(?<locale>en|fr)\/(?<subPath>[^/]+?)\.yml$/,
+      fullPathRegEx: /^content\/posts\/(?<locale>en|fr)\/(?<subPath>[^/]+?(?:\/[^/]+?)*)\.yml$/,
       fullPath: undefined,
       fmDelimiters: undefined,
       yamlQuote: true,
@@ -1127,7 +1136,7 @@ describe('Test getFileConfig()', () => {
       format: 'json',
       basePath: 'content/posts',
       subPath: undefined,
-      fullPathRegEx: /^content\/posts\/(?<locale>en|fr)\/(?<subPath>[^/]+?)\.json$/,
+      fullPathRegEx: /^content\/posts\/(?<locale>en|fr)\/(?<subPath>[^/]+?(?:\/[^/]+?)*)\.json$/,
       fullPath: undefined,
       fmDelimiters: undefined,
       yamlQuote: false,
@@ -1147,7 +1156,7 @@ describe('Test getFileConfig()', () => {
       format: 'frontmatter',
       basePath: 'content/posts',
       subPath: undefined,
-      fullPathRegEx: /^(?<locale>en|fr)\/content\/posts\/(?<subPath>[^/]+?)\.md$/,
+      fullPathRegEx: /^(?<locale>en|fr)\/content\/posts\/(?<subPath>[^/]+?(?:\/[^/]+?)*)\.md$/,
       fullPath: undefined,
       fmDelimiters: undefined,
       yamlQuote: false,
@@ -1162,6 +1171,7 @@ describe('Test getFileConfig()', () => {
         _i18n: i18nMultiRootFolder,
       }),
     ).toEqual({
+      bodyField: undefined,
       extension: 'md',
       format: 'frontmatter',
       basePath: 'content/posts',
@@ -1182,6 +1192,7 @@ describe('Test getFileConfig()', () => {
         _i18n: i18nMultiRootFolder,
       }),
     ).toEqual({
+      bodyField: undefined,
       extension: 'md',
       format: 'yaml-frontmatter',
       basePath: 'content/posts',
@@ -1206,7 +1217,7 @@ describe('Test getFileConfig()', () => {
       format: 'yaml',
       basePath: 'content/posts',
       subPath: undefined,
-      fullPathRegEx: /^(?<locale>en|fr)\/content\/posts\/(?<subPath>[^/]+?)\.yml$/,
+      fullPathRegEx: /^(?<locale>en|fr)\/content\/posts\/(?<subPath>[^/]+?(?:\/[^/]+?)*)\.yml$/,
       fullPath: undefined,
       fmDelimiters: undefined,
       yamlQuote: true,
@@ -1225,7 +1236,7 @@ describe('Test getFileConfig()', () => {
       format: 'json',
       basePath: 'content/posts',
       subPath: undefined,
-      fullPathRegEx: /^(?<locale>en|fr)\/content\/posts\/(?<subPath>[^/]+?)\.json$/,
+      fullPathRegEx: /^(?<locale>en|fr)\/content\/posts\/(?<subPath>[^/]+?(?:\/[^/]+?)*)\.json$/,
       fullPath: undefined,
       fmDelimiters: undefined,
       yamlQuote: false,
@@ -1334,6 +1345,7 @@ describe('Test getFileConfig()', () => {
         _i18n: i18nSingleFile,
       }),
     ).toEqual({
+      bodyField: undefined,
       extension: 'md',
       format: 'frontmatter',
       basePath: undefined,
@@ -1425,6 +1437,7 @@ describe('Test getFileConfig()', () => {
         _i18n: i18nMultiFile,
       }),
     ).toEqual({
+      bodyField: undefined,
       extension: 'md',
       format: 'frontmatter',
       basePath: undefined,
@@ -1519,6 +1532,7 @@ describe('Test getFileConfig()', () => {
         _i18n: i18nMultiFile,
       }),
     ).toEqual({
+      bodyField: undefined,
       extension: 'md',
       format: 'frontmatter',
       basePath: undefined,
@@ -1740,8 +1754,8 @@ describe('Test getFileConfig()', () => {
     // Should generate regex that matches files at root
     expect(result.basePath).toBe('');
     expect(result.fullPathRegEx).toBeDefined();
-    // The regex pattern for empty basePath should be: ^(?<subPath>[^/]+?)\.md$
-    expect(result.fullPathRegEx?.source).toBe('^(?<subPath>[^/]+?)\\.md$');
+    // The regex pattern for empty basePath should be: ^(?<subPath>[^/]+?(?:\\/[^/]+?)*)\.md$
+    expect(result.fullPathRegEx?.source).toBe('^(?<subPath>[^/]+?(?:\\/[^/]+?)*)\\.md$');
     // The regex should match root-level files
     expect(result.fullPathRegEx?.test('my-post.md')).toBe(true);
     expect(result.fullPathRegEx?.test('index.md')).toBe(true);
