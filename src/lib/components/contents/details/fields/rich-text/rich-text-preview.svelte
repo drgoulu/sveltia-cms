@@ -8,8 +8,9 @@
   import { highlightCodeToHTML, loadCodeHighlighter } from '@sveltia/ui';
   import { parse, use } from 'marked';
   import markedBidi from 'marked-bidi';
+  import renderMathInElement from 'katex/contrib/auto-render';
   import { isValidElement } from 'react';
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 
   import { getReactDom, loadReactDom, reactDomLoaded } from '$lib/services/api/react-dom';
@@ -366,13 +367,68 @@
     return doSanitize ? sanitizeRichTextHTML(rawHTML) : rawHTML;
   };
 
+  /**
+   * Normalize LaTeX before KaTeX parses it:
+   * - Unescape braces (\\{ -> {, \\} -> })
+   * - Normalize multiple backslashes on commands (\\\\text -> \\text)
+   * - Normalize markdown-escaped subscripts (v\\_0 -> v_0)
+   * - Escape underscores inside \\text{...}
+   * @param {string} math LaTeX math string to normalize.
+   * @returns {string} Cleaned math string.
+   */
+  const fixLatex = (math) => {
+    let m = math.replace(/\\+([{}])/g, '$1');
+    m = m.replace(/\\+([a-zA-Z]+)/g, '\\$1');
+    m = m.replace(/([a-zA-Z0-9])\\_([a-zA-Z0-9])/g, '$1_$2');
+    m = m.replace(/\\text\{([^}]*)\}/g, (match, inner) => {
+      return '\\text{' + inner.replace(/(?<!\\)_/g, '\\_') + '}';
+    });
+    return m;
+  };
+
+  const renderMath = () => {
+    if (!container) return;
+    try {
+      renderMathInElement(container, {
+        delimiters: [
+          { left: '$$', right: '$$', display: true },
+          { left: '$', right: '$', display: false },
+          { left: '\\(', right: '\\)', display: false },
+          { left: '\\[', right: '\\]', display: true },
+        ],
+        preProcess: fixLatex,
+        throwOnError: false,
+      });
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('KaTeX auto-render error:', err);
+    }
+  };
+
   $effect(() => {
     if (markdown) {
       preloadHighlighter(markdown);
     }
   });
 
+  $effect(() => {
+    if (markdown && container) {
+      void keyedBlocks;
+      void highlighterVersion;
+      tick().then(renderMath);
+    }
+  });
+
   onMount(() => {
+    // Ensure KaTeX stylesheet is loaded if not already present in the document
+    if (!document.querySelector('link[href*="katex"]')) {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = 'https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css';
+      link.crossOrigin = 'anonymous';
+      document.head.appendChild(link);
+    }
+
     const observer = new MutationObserver(mutationCallback);
 
     // Make sure to render the markdown after the observer is set up, otherwise the callback may not
@@ -380,6 +436,7 @@
     // @see https://github.com/sveltia/sveltia-cms/issues/805
     observer.observe(/** @type {HTMLElement} */ (container), { childList: true, subtree: true });
     observerReady = true;
+    tick().then(renderMath);
 
     return () => {
       observer.disconnect();

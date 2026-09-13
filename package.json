@@ -59,6 +59,7 @@
     "flat": "^6.0.1",
     "immutable": "^5.1.9",
     "isomorphic-dompurify": "^4.2.0",
+    "katex": "^0.18.7",
     "leaflet": "^1.9.4",
     "lexical": "^0.50.0",
     "marked": "^18.0.12",
