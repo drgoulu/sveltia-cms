@@ -86,6 +86,17 @@ export const createTransformer = ({ componentDef, CustomNode }) => {
           return [false, endLineIndex];
         }
 
+        // A multiline block element cannot consume lines if there is trailing non-whitespace
+        // content on the ending line; otherwise that trailing text is dropped.
+        const matchLines = matchString.split("\n");
+        const lastMatchLine = matchLines[matchLines.length - 1];
+        const endLine = lines[endLineIndex] ?? "";
+        const trailingText = endLine.slice(lastMatchLine.length).trim();
+
+        if (trailingText) {
+          return null;
+        }
+
         rootNode.append(new CustomNode(getProps(matchArray)));
 
         return [true, endLineIndex];
