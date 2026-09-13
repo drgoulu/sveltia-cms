@@ -264,16 +264,36 @@ export const HUGO_OPENBOOK_COMPONENT = {
   id: 'hugo-openbook',
   label: 'OpenBook (Hugo)',
   pattern: /{{[<%]\s*openbook\s+([^>%]+?)\s*[>%]}}/,
-  fromBlock: (match) => parseHugoArgs(match[1]),
+  fromBlock: (match) => {
+    const parsed = parseHugoArgs(match[1]);
+
+    return {
+      ...parsed,
+      isbn: parsed.isbn || parsed.booknumber || parsed.id || parsed._primary || '',
+      template: parsed.template || parsed.templatenumber || parsed._pos_1 || '',
+    };
+  },
   toBlock: (obj) => {
+    if (obj.booknumber || obj.templatenumber) {
+      const args = formatHugoArgs(obj, ['isbn', 'template', 'id']);
+
+      return `{{< openbook ${args} >}}`;
+    }
+
     const isbn = obj.isbn || obj.id || obj._primary || '';
     const template = obj.template || obj._pos_1 || '';
     const extra = template ? ` ${template}` : '';
 
-    return `{{< openbook ${isbn.includes(' ') ? `"${isbn}"` : isbn}${extra} >}}`;
+    if (isbn) {
+      return `{{< openbook ${isbn.includes(' ') ? `"${isbn}"` : isbn}${extra} >}}`;
+    }
+
+    const formatted = formatHugoArgs(obj);
+
+    return `{{< openbook${formatted ? ` ${formatted}` : ''} >}}`;
   },
   toPreview: (obj) => {
-    const id = obj.isbn || obj.id || obj._primary || '';
+    const id = obj.isbn || obj.booknumber || obj.id || obj._primary || '';
 
     return (
       '<div style="border:1px solid #e2e8f0;border-radius:8px;padding:12px 16px;margin:1.2em 0;display:flex;gap:12px;align-items:center;background:#f8fafc;">' +
@@ -392,8 +412,7 @@ export const HUGO_HIGHLIGHT_COMPONENT = {
 export const HUGO_GENERIC_COMPONENT = {
   id: 'hugo-generic',
   label: 'Shortcode Hugo (Générique)',
-  pattern:
-    /{{[<%]\s*([a-zA-Z0-9_-]+)\s*([^>%]*?)\s*[>%]}}(?:([\s\S]*?){{[<%]\s*\/\1\s*[>%]}})?/,
+  pattern: /{{[<%]\s*([a-zA-Z0-9_-]+)(?:\s+([^>%]*?))?\s*[>%]}/,
   fromBlock: (match) => ({
     name: match[1],
     args: match[2] || '',

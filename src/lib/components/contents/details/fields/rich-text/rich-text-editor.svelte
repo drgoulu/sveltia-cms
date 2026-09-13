@@ -92,6 +92,7 @@
   /** @type {HTMLElement | undefined} */
   let wrapper = $state();
   let inputValue = $state('');
+  let userEdited = false;
 
   let cleanupTimeout = 0;
   /**
@@ -154,6 +155,7 @@
     }
 
     return _editorComponents
+      .filter((name) => !name.startsWith("hugo-"))
       .filter((name) =>
         allowNestedComponents === 'exclude_self' ? !parentComponentNames.includes(name) : true,
       )
@@ -385,6 +387,7 @@
     const newValue = typeof currentValue === 'string' ? currentValue : '';
 
     if (inputValue !== newValue) {
+      userEdited = false;
       inputValue = newValue;
     }
 
@@ -419,6 +422,10 @@
   const setCurrentValue = () => {
     const newValue = inputValue;
 
+    if (!userEdited) {
+      return;
+    }
+
     if (currentValue !== newValue) {
       currentValue = newValue;
     }
@@ -452,7 +459,13 @@
    * the content to Markdown with a short delay, so a save right after typing would otherwise
    * validate the previous value.
    */
+  const markUserEdited = () => {
+    userEdited = true;
+  };
+
   const onBeforeInput = () => {
+    userEdited = true;
+
     if (settlePendingUpdate) {
       return;
     }
@@ -494,10 +507,14 @@
     // The `Update` event is dispatched on the editor’s root element without bubbling, so it can
     // only be caught in the capture phase
     target.addEventListener('beforeinput', onBeforeInput, true);
+    target.addEventListener('keydown', markUserEdited, true);
+    target.addEventListener('pointerdown', markUserEdited, true);
     target.addEventListener('Update', onUpdate, true);
 
     return () => {
       target.removeEventListener('beforeinput', onBeforeInput, true);
+      target.removeEventListener('keydown', markUserEdited, true);
+      target.removeEventListener('pointerdown', markUserEdited, true);
       target.removeEventListener('Update', onUpdate, true);
       // Don’t hold up a save when the editor goes away
       settlePendingUpdate?.();
