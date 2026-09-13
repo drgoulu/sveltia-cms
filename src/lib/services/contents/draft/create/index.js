@@ -8,6 +8,7 @@ import {
 import {
   getEntryDirPath,
   getMetaPathConfig,
+  isNestedCollection,
   nestedFilterPath,
 } from '$lib/services/contents/collection/nested';
 import { revokeDraftFileURLs } from '$lib/services/contents/draft';
@@ -97,14 +98,18 @@ export const getSlugEditorProp = ({ collection, collectionFile, originalSlugs })
  * @returns {string | undefined} Folder path, or `undefined` if the path editor is disabled.
  */
 export const getOriginalPath = ({ collection, originalEntry, initialPath }) => {
-  if (!getMetaPathConfig(collection)) {
-    return undefined;
-  }
-
   const { subPath } = originalEntry;
 
   if (typeof subPath === 'string') {
     return getEntryDirPath(subPath);
+  }
+
+  if (initialPath) {
+    return stripSlashes(initialPath);
+  }
+
+  if (!getMetaPathConfig(collection)) {
+    return undefined;
   }
 
   return stripSlashes(initialPath ?? nestedFilterPath.current);

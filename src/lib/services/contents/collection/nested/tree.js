@@ -133,7 +133,7 @@ const getNodeLabel = ({ collection, path, indexEntry, summaryTemplate, locale })
  * @returns {NestedTreeNode[]} Top-level folders, sorted by label. An empty array if the collection
  * is not a nested collection or has no folder to show.
  */
-const buildTree = ({ collection, entries, pruneLeaves, excludePath, locale }) => {
+const buildTree = ({ collection, entries, pruneLeaves, excludePath, locale, sortOrder = 'ascending' }) => {
   const config = getNestedConfig(collection, entries);
 
   if (!config) {
@@ -175,7 +175,7 @@ const buildTree = ({ collection, entries, pruneLeaves, excludePath, locale }) =>
         }),
         children: buildNodes(path),
       }))
-      .sort((a, b) => compare(a.label, b.label));
+      .sort((a, b) => (sortOrder === 'descending' ? compare(b.label, a.label) : compare(a.label, b.label)));
 
   return buildNodes('');
 };
@@ -193,8 +193,8 @@ const buildTree = ({ collection, entries, pruneLeaves, excludePath, locale }) =>
  * @returns {NestedTreeNode[]} Top-level folders, sorted by label. An empty array if the collection
  * is not a nested collection or has no subfolder.
  */
-export const getNestedTree = ({ collection, entries }) =>
-  buildTree({ collection, entries, pruneLeaves: true });
+export const getNestedTree = ({ collection, entries, sortOrder = 'ascending' }) =>
+  buildTree({ collection, entries, pruneLeaves: true, sortOrder });
 
 /**
  * Build the folder tree offered by the entry path editor, which lists every folder an entry can be
@@ -210,8 +210,8 @@ export const getNestedTree = ({ collection, entries }) =>
  * content each pane names the folders in its own language.
  * @returns {NestedTreeNode[]} Top-level folders, sorted by label.
  */
-export const getParentFolderTree = ({ collection, entries, excludePath, locale }) =>
-  buildTree({ collection, entries, pruneLeaves: false, excludePath, locale });
+export const getParentFolderTree = ({ collection, entries, excludePath, locale, sortOrder = 'ascending' }) =>
+  buildTree({ collection, entries, pruneLeaves: false, excludePath, locale, sortOrder });
 
 /**
  * Add a folder that holds no entry yet to a tree, creating any missing folders above it, so that it

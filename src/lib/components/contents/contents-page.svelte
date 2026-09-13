@@ -285,7 +285,10 @@
     // Entry collection
     if (routeType === 'new' && !subPath) {
       // Decap CMS passes the folder for a new entry in a nested collection as `?path=`
-      const initialPath = getMetaPathConfig(collection) ? params.path : undefined;
+      const initialPath =
+        (getMetaPathConfig(collection) || isNestedCollection(collection))
+          ? (params.path ?? nestedFilterPath.current)
+          : undefined;
 
       if (initialPath !== undefined) {
         delete params.path;

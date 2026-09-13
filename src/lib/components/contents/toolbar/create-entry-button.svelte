@@ -7,7 +7,7 @@
   import { selectedCollection } from '$lib/services/contents/collection';
   import { canCreateIndexFile } from '$lib/services/contents/collection/entries';
   import { getIndexFile } from '$lib/services/contents/collection/entries/index-file';
-  import { getMetaPathConfig, nestedFilterPath } from '$lib/services/contents/collection/nested';
+  import { getMetaPathConfig, isNestedCollection, nestedFilterPath } from '$lib/services/contents/collection/nested';
   import { collectionState } from '$lib/services/contents/collection/view';
   import { encodeFilePath } from '$lib/services/utils/file';
 
@@ -50,7 +50,7 @@
     const path =
       !index &&
       selectedCollection.current &&
-      getMetaPathConfig(selectedCollection.current) &&
+      (getMetaPathConfig(selectedCollection.current) || isNestedCollection(selectedCollection.current)) &&
       nestedFilterPath.current
         ? `?path=${encodeFilePath(nestedFilterPath.current)}`
         : '';

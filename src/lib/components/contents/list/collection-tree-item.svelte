@@ -9,6 +9,8 @@
   import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
   import { nestedFilterPath } from '$lib/services/contents/collection/nested';
   import { getNestedTree } from '$lib/services/contents/collection/nested/tree';
+  import { currentView } from '$lib/services/contents/collection/view';
+  import { entryListSettings } from '$lib/services/contents/collection/view/settings';
   import { env } from '$lib/services/user/env.svelte';
   import { mergeUnpublishedEntries, unpublishedEntries } from '$lib/services/workflow';
 
@@ -57,10 +59,19 @@
 
   const entryCount = $derived('files' in collection ? collection.files.length : entries.length);
 
+  const sortOrder = $derived.by(() => {
+    if (isCurrentCollection && currentView.current.sort?.order) {
+      return currentView.current.sort.order;
+    }
+    return entryListSettings.current?.[name]?.sort?.order ?? 'ascending';
+  });
+
   const treeNodes = $derived.by(() => {
     const internalCollection = getCollection(name);
 
-    return internalCollection ? getNestedTree({ collection: internalCollection, entries }) : [];
+    return internalCollection
+      ? getNestedTree({ collection: internalCollection, entries, sortOrder })
+      : [];
   });
 
   let expanded = $state(false);

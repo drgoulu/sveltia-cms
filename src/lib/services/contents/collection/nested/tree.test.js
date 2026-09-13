@@ -61,6 +61,21 @@ describe('getNestedTree()', () => {
     ]);
   });
 
+  test('sorts tree nodes in descending order when sortOrder is descending', () => {
+    const collection = { name: 'posts', folder: 'content/posts' };
+    const entries = [
+      entry('1980/post-1980'),
+      entry('2012/my-first-post'),
+      entry('2026/future-post'),
+    ];
+
+    expect(getNestedTree({ collection, entries, sortOrder: 'descending' })).toEqual([
+      node('2026'),
+      node('2012'),
+      node('1980'),
+    ]);
+  });
+
   describe('with subfolders', () => {
     const collection = { name: 'pages', folder: 'content/pages', nested: {} };
 
