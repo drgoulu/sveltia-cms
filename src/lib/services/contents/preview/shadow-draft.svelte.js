@@ -99,7 +99,7 @@ class ShadowDraftService {
 
     this.#timer = window.setTimeout(() => {
       this.#performSync(draft, locale, valueMap);
-    }, 500);
+    }, 200);
   }
 
   /**
@@ -113,13 +113,18 @@ class ShadowDraftService {
       const values = valueMap ?? getValueMapSnapshot(draft, locale);
       const serialized = serializeContent({ draft, locale, valueMap: { ...values } });
 
-      // Inject Hugo preview options: draft: false, slug: admin-preview to ensure fixed URL
+      // Inject Hugo preview options: draft: false, fixed preview URL, and exclude from site lists
       const previewPayload = {
         ...serialized,
         title: serialized.title || 'Aperçu du brouillon',
         slug: 'admin-preview',
+        url: '/admin-preview/',
         date: serialized.date || new Date().toISOString(),
         draft: false,
+        build: {
+          list: 'never',
+          render: 'always',
+        },
       };
 
       const fileConfig = draft.collection?._file ?? {

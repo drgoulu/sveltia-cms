@@ -34,8 +34,8 @@
       let cancelled = false;
 
       const refresh = async () => {
-        // Hugo takes 1-7s depending on rebuild scope. Poll for exact revision.
-        const maxAttempts = 35;
+        // Poll for exact revision with fast 100ms intervals
+        const maxAttempts = 50;
         for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
           if (cancelled) return;
           try {
@@ -56,7 +56,7 @@
           } catch {
             // Keep waiting while server is compiling
           }
-          await new Promise((resolve) => setTimeout(resolve, 400));
+          await new Promise((resolve) => setTimeout(resolve, 100));
         }
 
         if (!cancelled) {
