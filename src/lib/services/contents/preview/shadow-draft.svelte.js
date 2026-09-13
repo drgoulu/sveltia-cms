@@ -2,6 +2,27 @@ import { serializeContent } from '$lib/services/contents/draft/save/serialize';
 import { formatFrontMatter } from '$lib/services/contents/file/format';
 
 /**
+ * Resolves candidate API endpoints for shadow draft preview.
+ * When running in development, Sveltia CMS might be loaded as an ES module from the Vite dev server
+ * (e.g. port 5173) while the host site / CMS admin page runs on Hugo (e.g. port 1313).
+ * @returns {string[]}
+ */
+const getCandidateApiUrls = () => {
+  const urls = [];
+  try {
+    if (import.meta?.url) {
+      const origin = new URL(import.meta.url).origin;
+      urls.push(`${origin}/api/preview`);
+    }
+  } catch {
+    // Ignore
+  }
+  urls.push('http://localhost:5173/api/preview');
+  urls.push('/api/preview');
+  return [...new Set(urls)];
+};
+
+/**
  * Service managing real-time Shadow Draft generation for Hugo live preview.
  */
 class ShadowDraftService {
@@ -17,6 +38,9 @@ class ShadowDraftService {
   /** @type {number} Timestamp of the latest successful sync */
   lastSync = $state(0);
 
+  /** @type {string} Resolved API URL for preview endpoints */
+  #apiUrl = '';
+
   /** @type {number | undefined} Debounce timer ID */
   #timer = undefined;
 
@@ -31,20 +55,26 @@ class ShadowDraftService {
    * Check if the local Vite dev server /api/preview endpoint is available.
    */
   async checkAvailability() {
-    try {
-      const res = await fetch('/api/preview', { method: 'GET' });
-      if (res.ok) {
-        const data = await res.json();
-        this.available = Boolean(data.enabled);
-        if (data.previewUrl) {
-          this.previewUrl = data.previewUrl;
+    const candidates = getCandidateApiUrls();
+    for (const url of candidates) {
+      try {
+        const res = await fetch(url, { method: 'GET' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.enabled) {
+            this.#apiUrl = url;
+            this.available = true;
+            if (data.previewUrl) {
+              this.previewUrl = data.previewUrl;
+            }
+            return;
+          }
         }
-      } else {
-        this.available = false;
+      } catch {
+        // Try next candidate
       }
-    } catch {
-      this.available = false;
     }
+    this.available = false;
   }
 
   /**
@@ -103,8 +133,12 @@ class ShadowDraftService {
         return;
       }
 
+      if (!this.#apiUrl) {
+        return;
+      }
+
       this.syncing = true;
-      const res = await fetch('/api/preview', {
+      const res = await fetch(this.#apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: markdown }),
@@ -126,12 +160,12 @@ class ShadowDraftService {
    * Delete shadow draft file on disk when closing or navigating away.
    */
   async clean() {
-    if (!this.available) {
+    if (!this.available || !this.#apiUrl) {
       return;
     }
     this.#lastSentContent = '';
     try {
-      await fetch('/api/preview', { method: 'DELETE' });
+      await fetch(this.#apiUrl, { method: 'DELETE' });
     } catch {
       // Ignore
     }
