@@ -21,6 +21,7 @@
   let compiling = $state(false);
 
   const reloadIframe = () => {
+    iframeKey += 1;
     iframeSrc = `${shadowDraft.previewUrl}?_t=${Date.now()}`;
   };
 
@@ -43,6 +44,7 @@
             });
             if (res.ok) {
               if (!cancelled) {
+                iframeKey += 1;
                 iframeSrc = `${shadowDraft.previewUrl}?_t=${Date.now()}`;
                 compiling = false;
               }
@@ -55,6 +57,7 @@
         }
 
         if (!cancelled) {
+          iframeKey += 1;
           iframeSrc = `${shadowDraft.previewUrl}?_t=${Date.now()}`;
           compiling = false;
         }
