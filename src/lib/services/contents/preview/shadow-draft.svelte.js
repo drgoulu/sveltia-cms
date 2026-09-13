@@ -39,6 +39,9 @@ class ShadowDraftService {
   /** @type {number} Timestamp of the latest successful sync */
   lastSync = $state(0);
 
+  /** @type {number} Current revision ID to verify rendered Hugo output */
+  currentRevision = $state(0);
+
   /** @type {string} Resolved API URL for preview endpoints */
   #apiUrl = '';
 
@@ -110,18 +113,12 @@ class ShadowDraftService {
       const values = valueMap ?? getValueMapSnapshot(draft, locale);
       const serialized = serializeContent({ draft, locale, valueMap: { ...values } });
 
-      // Inject Hugo preview options: draft: false, build.list: never, fixed url
+      // Inject Hugo preview options: draft: false to ensure rendering
       const previewPayload = {
         ...serialized,
         title: serialized.title || 'Aperçu du brouillon',
-        slug: 'admin-preview',
         date: serialized.date || new Date().toISOString(),
         draft: false,
-        url: '/admin-preview/',
-        build: {
-          render: 'always',
-          list: 'never',
-        },
       };
 
       const fileConfig = draft.collection?._file ?? {
@@ -140,15 +137,19 @@ class ShadowDraftService {
         return;
       }
 
+      const revision = Date.now();
+      const markdownWithRev = `${markdown}\n\n<!-- shadow-preview-rev:${revision} -->\n`;
+
       this.syncing = true;
       const res = await fetch(this.#apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: markdown }),
+        body: JSON.stringify({ content: markdownWithRev }),
       });
 
       if (res.ok) {
         this.#lastSentContent = markdown;
+        this.currentRevision = revision;
         this.lastSync = Date.now();
       }
     } catch (err) {

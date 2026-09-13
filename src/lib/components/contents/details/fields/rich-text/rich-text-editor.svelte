@@ -35,7 +35,10 @@
     NODE_NAME_MAP,
   } from '$lib/services/contents/fields/rich-text';
   import { EditorComponent } from '$lib/services/contents/fields/rich-text/components';
-  import { getComponentDef } from '$lib/services/contents/fields/rich-text/components/definitions';
+  import {
+    getComponentDef,
+    HUGO_COMPONENT_NAMES,
+  } from '$lib/services/contents/fields/rich-text/components/definitions';
   import { getCanonicalLocale, getDirection } from '$lib/services/contents/i18n';
   import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
   import {
@@ -154,8 +157,13 @@
       return [];
     }
 
-    return _editorComponents
-      .filter((name) => !name.startsWith("hugo-"))
+    const componentNames = new Set([
+      ..._editorComponents,
+      ...HUGO_COMPONENT_NAMES,
+      ...customComponentRegistry.keys(),
+    ]);
+
+    return [...componentNames]
       .filter((name) =>
         allowNestedComponents === 'exclude_self' ? !parentComponentNames.includes(name) : true,
       )

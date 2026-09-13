@@ -28,30 +28,33 @@
   // When shadow draft confirms a sync, refresh iframe once Hugo has rebuilt
   $effect(() => {
     const syncTime = shadowDraft.lastSync;
+    const targetRev = shadowDraft.currentRevision;
     if (syncTime > 0) {
       compiling = true;
       let cancelled = false;
 
       const refresh = async () => {
-        // Hugo takes ~1.5-2.2s to rebuild on this site.
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-
-        for (let attempt = 0; attempt < 8; attempt += 1) {
+        // Hugo takes 1-7s depending on rebuild scope. Poll for exact revision.
+        const maxAttempts = 35;
+        for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
           if (cancelled) return;
           try {
             const res = await fetch(`${shadowDraft.previewUrl}?_chk=${Date.now()}`, {
               cache: 'no-store',
             });
             if (res.ok) {
-              if (!cancelled) {
-                iframeKey += 1;
-                iframeSrc = `${shadowDraft.previewUrl}?_t=${Date.now()}`;
-                compiling = false;
+              const html = await res.text();
+              if (!targetRev || html.includes(`<!-- shadow-preview-rev:${targetRev} -->`)) {
+                if (!cancelled) {
+                  iframeKey += 1;
+                  iframeSrc = `${shadowDraft.previewUrl}?_t=${Date.now()}`;
+                  compiling = false;
+                }
+                return;
               }
-              return;
             }
           } catch {
-            // Keep waiting
+            // Keep waiting while server is compiling
           }
           await new Promise((resolve) => setTimeout(resolve, 400));
         }
