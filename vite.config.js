@@ -493,13 +493,11 @@ const generateExtraFiles = () => ({
  */
 const shadowDraftPlugin = () => {
   const contentDir = process.env.HUGO_CONTENT_DIR || path.resolve('../drgoulu.com/content');
-  const previewPath = path.resolve(contentDir, 'posts/admin-preview.md');
-  const legacyPreviewPath = path.resolve(contentDir, 'admin-preview.md');
+  const previewPath = path.resolve(contentDir, 'admin-preview.md');
 
   const placeholder = `---
 title: Aperçu du brouillon
 slug: admin-preview
-url: /admin-preview/
 date: '2026-09-13'
 draft: false
 build:
@@ -510,10 +508,7 @@ build:
 
   const initPreviewFile = () => {
     try {
-      if (existsSync(legacyPreviewPath)) {
-        unlinkSync(legacyPreviewPath);
-      }
-      if (existsSync(path.dirname(previewPath)) && !existsSync(previewPath)) {
+      if (existsSync(contentDir) && !existsSync(previewPath)) {
         writeFileSync(previewPath, placeholder, 'utf-8');
       }
     } catch {
@@ -523,9 +518,6 @@ build:
 
   const cleanPreviewFile = () => {
     try {
-      if (existsSync(legacyPreviewPath)) {
-        unlinkSync(legacyPreviewPath);
-      }
       if (existsSync(previewPath)) {
         unlinkSync(previewPath);
       }

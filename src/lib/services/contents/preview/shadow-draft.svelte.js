@@ -118,7 +118,6 @@ class ShadowDraftService {
         ...serialized,
         title: serialized.title || 'Aperçu du brouillon',
         slug: 'admin-preview',
-        url: '/admin-preview/',
         date: serialized.date || new Date().toISOString(),
         draft: false,
         build: {
