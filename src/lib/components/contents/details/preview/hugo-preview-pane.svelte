@@ -44,7 +44,13 @@
             });
             if (res.ok) {
               const html = await res.text();
-              if (!targetRev || html.includes(`data-rev="${targetRev}"`)) {
+              const hasRev =
+                !targetRev ||
+                html.includes(`data-rev="${targetRev}"`) ||
+                html.includes(`data-rev=${targetRev}`) ||
+                html.includes(String(targetRev));
+
+              if (hasRev) {
                 if (!cancelled) {
                   iframeKey += 1;
                   iframeSrc = `${shadowDraft.previewUrl}?_t=${Date.now()}`;
