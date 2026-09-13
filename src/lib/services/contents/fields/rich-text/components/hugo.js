@@ -52,7 +52,7 @@ export const formatHugoArgs = (obj, excludeKeys = []) => {
   while (obj[`_pos_${posIndex}`] !== undefined) {
     const pVal = String(obj[`_pos_${posIndex}`]);
 
-    parts.push(pVal.includes(' ') ? `"${pVal}"` : pVal);
+    parts.push(/^[a-zA-Z0-9]+$/.test(pVal) ? pVal : `"${pVal.replaceAll('"', '\\"')}"`);
     posIndex += 1;
   }
 
@@ -62,7 +62,7 @@ export const formatHugoArgs = (obj, excludeKeys = []) => {
     const val = obj[key];
 
     if (val !== undefined && val !== null && val !== '') {
-      parts.push(`${key}="${val}"`);
+      parts.push(`${key}="${String(val).replaceAll('"', '\\"')}"`);
     }
   });
 
@@ -211,7 +211,7 @@ export const HUGO_YOUTUBE_COMPONENT = {
   toBlock: (obj) => {
     const id = obj.id || obj._primary || '';
 
-    return `{{< youtube ${id.includes(' ') ? `"${id}"` : id} >}}`;
+    return `{{< youtube "${String(id).replaceAll('"', '\\"')}" >}}`;
   },
   toPreview: (obj) => {
     const id = obj.id || obj._primary || '';
@@ -219,12 +219,11 @@ export const HUGO_YOUTUBE_COMPONENT = {
     return (
       '<div style="position:relative;width:100%;padding-bottom:56.25%;height:0;overflow:hidden;margin:1.2em 0;border-radius:8px;background:#000;">' +
       `<iframe src="https://www.youtube-nocookie.com/embed/${escapeHtml(id)}" ` +
-      'style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;" ' +
-      'allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>' +
+      'style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;" allowfullscreen></iframe>' +
       '</div>'
     );
   },
-  fields: [{ label: 'ID de la vidéo', name: 'id', widget: 'string' }],
+  fields: [{ label: 'ID YouTube ou URL', name: 'id', widget: 'string' }],
 };
 
 /**
@@ -240,7 +239,7 @@ export const HUGO_VIMEO_COMPONENT = {
   toBlock: (obj) => {
     const id = obj.id || obj._primary || '';
 
-    return `{{< vimeo ${id.includes(' ') ? `"${id}"` : id} >}}`;
+    return `{{< vimeo "${String(id).replaceAll('"', '\\"')}" >}}`;
   },
   toPreview: (obj) => {
     const id = obj.id || obj._primary || '';
@@ -282,10 +281,12 @@ export const HUGO_OPENBOOK_COMPONENT = {
 
     const isbn = obj.isbn || obj.id || obj._primary || '';
     const template = obj.template || obj._pos_1 || '';
-    const extra = template ? ` ${template}` : '';
 
     if (isbn) {
-      return `{{< openbook ${isbn.includes(' ') ? `"${isbn}"` : isbn}${extra} >}}`;
+      const quotedIsbn = `"${String(isbn).replaceAll('"', '\\"')}"`;
+      const quotedTemplate = template ? ` "${String(template).replaceAll('"', '\\"')}"` : '';
+
+      return `{{< openbook ${quotedIsbn}${quotedTemplate} >}}`;
     }
 
     const formatted = formatHugoArgs(obj);
