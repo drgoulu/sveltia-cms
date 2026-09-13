@@ -217,6 +217,17 @@ describe('hugo components definitions', () => {
       expect(preview).toContain('relref');
       expect(preview).toContain('&quot;about.md&quot;');
     });
+
+    it('has trigger none so it is excluded from the insert menu', () => {
+      expect(HUGO_GENERIC_COMPONENT.trigger).toBe('none');
+    });
+
+    it('does not match known shortcodes like highlight or figure', () => {
+      expect('{{< highlight bash >}}'.match(HUGO_GENERIC_COMPONENT.pattern)).toBeNull();
+      expect('{{< figure src="x.jpg" >}}'.match(HUGO_GENERIC_COMPONENT.pattern)).toBeNull();
+      expect('{{< youtube 12345 >}}'.match(HUGO_GENERIC_COMPONENT.pattern)).toBeNull();
+      expect('{{< /highlight >}}'.match(HUGO_GENERIC_COMPONENT.pattern)).toBeNull();
+    });
   });
 
   describe('shortcodes collapsed by default', () => {

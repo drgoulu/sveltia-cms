@@ -14,6 +14,7 @@ export * from './services/api';
 
 window.CMS = CMS;
 window.initCMS = init;
+window.__SVELTIA_CMS__ = true;
 
 // Expose React APIs for custom field types, custom preview templates and custom editor components
 // @see https://decapcms.org/docs/custom-widgets/

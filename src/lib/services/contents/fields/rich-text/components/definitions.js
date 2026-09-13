@@ -127,18 +127,18 @@ export const getBuiltInComponentDefs = () => {
  * @returns {EditorComponentDefinition | undefined} Definition.
  */
 export const getComponentDef = (name) => {
+  const hugoComponentDef = hugoComponentMap.get(name);
+
+  if (hugoComponentDef) {
+    return hugoComponentDef;
+  }
+
   const customComponentDef = customComponentRegistry.get(name);
 
   if (customComponentDef) {
     // Add a prefix to the component ID to avoid conflicts with built-in components and Lexical’s
     // built-in node types, such as `code`.
     return { ...customComponentDef, id: `x-${name}` };
-  }
-
-  const hugoComponentDef = hugoComponentMap.get(name);
-
-  if (hugoComponentDef) {
-    return hugoComponentDef;
   }
 
   // Common props with localized labels

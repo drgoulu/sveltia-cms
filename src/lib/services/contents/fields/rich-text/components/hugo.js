@@ -421,7 +421,9 @@ export const HUGO_GENERIC_COMPONENT = {
   id: 'hugo-generic',
   label: 'Shortcode Hugo (Générique)',
   collapsed: true,
-  pattern: /{{[<%]\s*([a-zA-Z0-9_-]+)(?:\s+([^>%]*?))?\s*[>%]}/,
+  trigger: 'none',
+  pattern:
+    /{{[<%]\s*(?!(?:\/|highlight|figure|youtube|vimeo|openbook|altmetric|gist)\b)([a-zA-Z0-9_-]+)(?:\s+([^>%]*?))?\s*[>%]}/,
   fromBlock: (match) => ({
     name: match[1],
     args: match[2] || '',
