@@ -89,7 +89,7 @@
     label,
     mode = 'block',
     inline = false,
-    collapsed = false,
+    collapsed = componentName?.startsWith('hugo-') || componentName?.startsWith('x-'),
     summary,
     fields,
     values,
@@ -340,6 +340,79 @@
     return label;
   });
 
+  /**
+   * Informative label to display in the header for collapsed/expanded blocks.
+   * Gives a clear, readable summary of the shortcode name and arguments at a glance.
+   */
+  const headerLabel = $derived.by(() => {
+    const hasFieldValues = fields.some((f) => currentValues?.[f.name] !== undefined);
+    const vals = hasFieldValues ? currentValues : values;
+
+    if (!vals) {
+      return label;
+    }
+
+    if (componentName === 'hugo-generic') {
+      const name = vals.name;
+
+      if (name) {
+        const args = vals.args ? ` ${String(vals.args).trim()}` : '';
+
+        return `{{< ${name}${args} >}}`;
+      }
+
+      return label;
+    }
+
+    if (componentName === 'hugo-highlight') {
+      const lang = vals.lang;
+      const opts = vals.options ? ` ${String(vals.options).trim()}` : '';
+
+      return lang ? `{{< highlight ${lang}${opts} >}}` : label;
+    }
+
+    if (componentName === 'hugo-figure') {
+      const src = vals.src || vals._primary || '';
+      const caption = vals.caption || vals.alt || '';
+
+      if (src) {
+        return caption ? `Figure : ${src} (${caption})` : `Figure : ${src}`;
+      }
+
+      return label;
+    }
+
+    if (componentName === 'hugo-youtube') {
+      return vals.id ? `YouTube : ${vals.id}` : label;
+    }
+
+    if (componentName === 'hugo-vimeo') {
+      return vals.id ? `Vimeo : ${vals.id}` : label;
+    }
+
+    if (componentName === 'hugo-gist') {
+      return vals.user || vals.id ? `Gist : ${vals.user || ''}/${vals.id || ''}` : label;
+    }
+
+    if (componentName === 'hugo-openbook') {
+      return vals.isbn || vals._primary ? `OpenBook : ${vals.isbn || vals._primary}` : label;
+    }
+
+    if (componentName === 'hugo-altmetric') {
+      return vals.doi || vals._primary ? `Altmetric : ${vals.doi || vals._primary}` : label;
+    }
+
+    if (displayField && vals[displayField.name]) {
+      const val = String(vals[displayField.name]).trim();
+
+      if (val) {
+        return `${label} : ${val}`;
+      }
+    }
+
+    return label;
+  });
+
   onMount(() => {
     window.requestAnimationFrame(() => {
       // Get the draft state, locale and key path from the closest containers
@@ -361,6 +434,11 @@
       // Auto-open dialog for freshly inserted components (dialog mode only)
       if (mode === 'dialog' && isNewComponent) {
         openDialog();
+      }
+
+      // Auto-expand newly inserted components in block mode so fields are visible immediately
+      if (mode === 'block' && isNewComponent) {
+        expanded = true;
       }
     });
 
@@ -524,7 +602,7 @@
     bind:this={wrapper}
     contenteditable="false"
     tabindex="0"
-    aria-label={label}
+    aria-label={headerLabel}
     data-key-path-prefix={keyPathPrefix}
     data-component-name={componentName}
     onkeydowncapture={(event) => {
@@ -544,7 +622,7 @@
       }
     }}
   >
-    <ObjectHeader {label} controlId="object-{fieldId}-item-list" bind:expanded>
+    <ObjectHeader label={headerLabel} controlId="object-{fieldId}-item-list" bind:expanded>
       {#snippet endContent()}
         <Button
           size="small"

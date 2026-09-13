@@ -61,7 +61,7 @@ export const createCustomNodeClass = (componentDef) => {
   const {
     id: componentName,
     label,
-    collapsed,
+    collapsed = componentName?.startsWith('hugo-') || componentName?.startsWith('x-'),
     mode,
     summary,
     fields,

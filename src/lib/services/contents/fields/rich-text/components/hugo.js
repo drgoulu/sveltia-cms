@@ -133,6 +133,7 @@ export const resolveHugoImagePath = (src) => {
 export const HUGO_FIGURE_COMPONENT = {
   id: 'hugo-figure',
   label: 'Figure (Hugo)',
+  collapsed: true,
   pattern: /{{[<%]\s*figure\s+([^>%]+?)\s*[>%]}}/,
   fromBlock: (match) => parseHugoArgs(match[1]),
   toBlock: (obj) => {
@@ -206,6 +207,7 @@ export const HUGO_FIGURE_COMPONENT = {
 export const HUGO_YOUTUBE_COMPONENT = {
   id: 'hugo-youtube',
   label: 'YouTube (Hugo)',
+  collapsed: true,
   pattern: /{{[<%]\s*youtube\s+([^>%]+?)\s*[>%]}}/,
   fromBlock: (match) => parseHugoArgs(match[1]),
   toBlock: (obj) => {
@@ -234,6 +236,7 @@ export const HUGO_YOUTUBE_COMPONENT = {
 export const HUGO_VIMEO_COMPONENT = {
   id: 'hugo-vimeo',
   label: 'Vimeo (Hugo)',
+  collapsed: true,
   pattern: /{{[<%]\s*vimeo\s+([^>%]+?)\s*[>%]}}/,
   fromBlock: (match) => parseHugoArgs(match[1]),
   toBlock: (obj) => {
@@ -262,6 +265,7 @@ export const HUGO_VIMEO_COMPONENT = {
 export const HUGO_OPENBOOK_COMPONENT = {
   id: 'hugo-openbook',
   label: 'OpenBook (Hugo)',
+  collapsed: true,
   pattern: /{{[<%]\s*openbook\s+([^>%]+?)\s*[>%]}}/,
   fromBlock: (match) => {
     const parsed = parseHugoArgs(match[1]);
@@ -318,6 +322,7 @@ export const HUGO_OPENBOOK_COMPONENT = {
 export const HUGO_ALTMETRIC_COMPONENT = {
   id: 'hugo-altmetric',
   label: 'Altmetric (Hugo)',
+  collapsed: true,
   pattern: /{{[<%]\s*altmetric\s+([^>%]+?)\s*[>%]}}/,
   fromBlock: (match) => parseHugoArgs(match[1]),
   toBlock: (obj) => {
@@ -350,6 +355,7 @@ export const HUGO_ALTMETRIC_COMPONENT = {
 export const HUGO_GIST_COMPONENT = {
   id: 'hugo-gist',
   label: 'GitHub Gist (Hugo)',
+  collapsed: true,
   pattern: /{{[<%]\s*gist\s+([^>%]+?)\s*[>%]}}/,
   fromBlock: (match) => parseHugoArgs(match[1]),
   toBlock: (obj) => {
@@ -384,6 +390,7 @@ export const HUGO_GIST_COMPONENT = {
 export const HUGO_HIGHLIGHT_COMPONENT = {
   id: 'hugo-highlight',
   label: 'Highlight (Hugo)',
+  collapsed: true,
   pattern:
     /{{[<%]\s*highlight\s+([a-zA-Z0-9_-]+)(?:\s+([^>%]*?))?\s*[>%]}}([\s\S]*?){{[<%]\s*\/highlight\s*[>%]}}/,
   fromBlock: (match) => ({
@@ -413,6 +420,7 @@ export const HUGO_HIGHLIGHT_COMPONENT = {
 export const HUGO_GENERIC_COMPONENT = {
   id: 'hugo-generic',
   label: 'Shortcode Hugo (Générique)',
+  collapsed: true,
   pattern: /{{[<%]\s*([a-zA-Z0-9_-]+)(?:\s+([^>%]*?))?\s*[>%]}/,
   fromBlock: (match) => ({
     name: match[1],

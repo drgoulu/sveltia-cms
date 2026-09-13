@@ -111,10 +111,35 @@
       }
     }
 
+    /* Expand .start to fill available space when .center is empty but .end has buttons */
+    &:has(.center:empty):not(:has(.end:empty)) {
+      .start {
+        flex: 1;
+        width: auto;
+        min-width: 0;
+
+        :global(button) {
+          max-width: 100%;
+          justify-content: flex-start;
+        }
+      }
+
+      .center {
+        display: none;
+      }
+
+      .end {
+        width: auto;
+      }
+    }
+
     .type {
       font-size: var(--sui-font-size-small);
       font-weight: var(--sui-font-weight-bold);
       color: var(--sui-secondary-foreground-color);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
   }
 </style>

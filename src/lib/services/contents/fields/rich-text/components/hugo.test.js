@@ -218,4 +218,13 @@ describe('hugo components definitions', () => {
       expect(preview).toContain('&quot;about.md&quot;');
     });
   });
+
+  describe('shortcodes collapsed by default', () => {
+    it('all hugo components have collapsed: true', () => {
+      ALL_HUGO_COMPONENTS.forEach((comp) => {
+        expect(comp.collapsed).toBe(true);
+      });
+    });
+  });
 });
+
