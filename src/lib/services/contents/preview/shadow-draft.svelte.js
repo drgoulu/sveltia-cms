@@ -99,7 +99,7 @@ class ShadowDraftService {
 
     this.#timer = window.setTimeout(() => {
       this.#performSync(draft, locale, valueMap);
-    }, 300);
+    }, 500);
   }
 
   /**
