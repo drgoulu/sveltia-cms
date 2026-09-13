@@ -1,5 +1,5 @@
 import { exec } from 'child_process';
-import { existsSync, readdirSync } from 'fs';
+import { existsSync, readdirSync, unlinkSync } from 'fs';
 import { appendFile, cp, mkdir, readFile, writeFile } from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -485,6 +485,100 @@ const generateExtraFiles = () => ({
 });
 
 // https://vitejs.dev/config/
+
+/**
+ * Vite plugin exposing /api/preview endpoint to write draft content
+ * to a temporary file in the Hugo content directory for instant Hugo Fast Render preview.
+ * @returns {import('vite').Plugin} Vite plugin.
+ */
+const shadowDraftPlugin = () => {
+  const contentDir = process.env.HUGO_CONTENT_DIR || path.resolve('../drgoulu.com/content');
+  const previewPath = path.resolve(contentDir, 'admin-preview.md');
+
+  const cleanPreviewFile = () => {
+    try {
+      if (existsSync(previewPath)) {
+        unlinkSync(previewPath);
+      }
+    } catch {
+      // Ignore
+    }
+  };
+
+  return {
+    name: 'shadow-draft-plugin',
+    configureServer(server) {
+      cleanPreviewFile();
+      process.on('exit', cleanPreviewFile);
+      process.on('SIGINT', () => {
+        cleanPreviewFile();
+        process.exit();
+      });
+      process.on('SIGTERM', () => {
+        cleanPreviewFile();
+        process.exit();
+      });
+
+      server.middlewares.use(async (req, res, next) => {
+        if (!req.url.startsWith('/api/preview')) {
+          return next();
+        }
+
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+        if (req.method === 'OPTIONS') {
+          res.statusCode = 204;
+          return res.end();
+        }
+
+        if (req.method === 'GET') {
+          res.setHeader('Content-Type', 'application/json');
+          return res.end(JSON.stringify({
+            enabled: existsSync(contentDir),
+            previewUrl: 'http://localhost:1313/admin-preview/',
+          }));
+        }
+
+        if (req.method === 'DELETE') {
+          cleanPreviewFile();
+          res.setHeader('Content-Type', 'application/json');
+          return res.end(JSON.stringify({ ok: true }));
+        }
+
+        if (req.method === 'POST') {
+          try {
+            let body = '';
+            for await (const chunk of req) {
+              body += chunk;
+            }
+            const data = JSON.parse(body || '{}');
+            const markdown = data.content ?? '';
+
+            if (existsSync(contentDir)) {
+              
+              await writeFile(previewPath, markdown, 'utf-8');
+            }
+
+            res.setHeader('Content-Type', 'application/json');
+            return res.end(JSON.stringify({
+              ok: true,
+              previewUrl: 'http://localhost:1313/admin-preview/',
+            }));
+          } catch (err) {
+            res.statusCode = 500;
+            res.setHeader('Content-Type', 'application/json');
+            return res.end(JSON.stringify({ error: err.message }));
+          }
+        }
+
+        next();
+      });
+    },
+  };
+};
+
 export default defineConfig({
   resolve: {
     alias: {
@@ -546,6 +640,7 @@ export default defineConfig({
     outDir: 'package/dist',
   },
   plugins: [
+    shadowDraftPlugin(),
     yamlToJS(),
     svelte({
       ...svelteConfig,

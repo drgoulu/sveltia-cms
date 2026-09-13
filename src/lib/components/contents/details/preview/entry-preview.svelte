@@ -4,6 +4,7 @@
 
   import EntryPreviewIframe from '$lib/components/contents/details/preview/entry-preview-iframe.svelte';
   import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
+  import HugoPreviewPane from '$lib/components/contents/details/preview/hugo-preview-pane.svelte';
   import { immutableLoaded, loadImmutable } from '$lib/services/api/immutable';
   import {
     customPreviewStyleRegistry,
@@ -11,6 +12,7 @@
   } from '$lib/services/api/registries';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { preparePreviewTemplateProps } from '$lib/services/contents/editor/preview-templates';
+  import { shadowDraft } from '$lib/services/contents/preview/shadow-draft.svelte';
 
   /**
    * @import { EntryDraft, InternalLocaleCode } from '$lib/types/private';
@@ -30,6 +32,8 @@
     /* eslint-enable prefer-const */
   } = $props();
 
+  let useHugoLivePreview = $state(true);
+
   const {
     collectionName,
     fileName,
@@ -48,9 +52,17 @@
       : undefined,
   );
 
+  // Sync draft to Hugo shadow file whenever values change
+  $effect(() => {
+    if (entryDraft.current && shadowDraft.available && useHugoLivePreview) {
+      // Trigger dependency on current localized values
+      const _ = JSON.stringify(entryDraft.current.currentValues?.[locale]);
+      shadowDraft.scheduleSync(entryDraft.current, locale);
+    }
+  });
+
   $effect(() => {
     if (reactComponent) {
-      // Normally already in flight, as `CMS.registerPreviewTemplate()` starts loading the library
       loadImmutable().catch((/** @type {Error} */ error) => {
         // eslint-disable-next-line no-console
         console.error(error);
@@ -72,23 +84,62 @@
   {/each}
 {/snippet}
 
-<VisibilityObserver>
-  {#if reactComponent && reactProps}
-    <EntryPreviewIframe {locale} {styleURLs} {reactComponent} {reactProps} />
-  {:else if styleURLs.length}
-    <EntryPreviewIframe {locale} {styleURLs} {children} />
-  {:else}
-    <div role="document" aria-label={_('content_preview')}>
-      {@render children()}
+{#if shadowDraft.available && useHugoLivePreview}
+  <HugoPreviewPane onSwitchToStandard={() => (useHugoLivePreview = false)} />
+{:else}
+  {#if shadowDraft.available}
+    <div class="hugo-switch-bar">
+      <button
+        type="button"
+        class="hugo-switch-btn"
+        onclick={() => (useHugoLivePreview = true)}
+      >
+        ⚡ Basculer vers l’aperçu Hugo en direct
+      </button>
     </div>
   {/if}
-</VisibilityObserver>
+
+  <VisibilityObserver>
+    {#if reactComponent && reactProps}
+      <EntryPreviewIframe {locale} {styleURLs} {reactComponent} {reactProps} />
+    {:else if styleURLs.length}
+      <EntryPreviewIframe {locale} {styleURLs} {children} />
+    {:else}
+      <div role="document" aria-label={_('content_preview')}>
+        {@render children()}
+      </div>
+    {/if}
+  </VisibilityObserver>
+{/if}
 
 <style>
-  div {
+  div[role='document'] {
     --entry-preview-padding-block: 8px;
     --entry-preview-padding-inline: 16px;
     padding-block: var(--entry-preview-padding-block);
     padding-inline: var(--entry-preview-padding-inline);
+  }
+
+  .hugo-switch-bar {
+    padding: 6px 12px;
+    background: #1e293b;
+    border-bottom: 1px solid #334155;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .hugo-switch-btn {
+    background: #2563eb;
+    color: #ffffff;
+    border: none;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  .hugo-switch-btn:hover {
+    background: #1d4ed8;
   }
 </style>
