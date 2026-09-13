@@ -201,7 +201,7 @@
 
 <!-- A collection whose entries all sit at the top level has no folder to choose and, in the
 `subfolders` mode, no way to make one, which leaves nothing for the field to do -->
-{#if entryDraft.current && (config || isNestedCollection(collection)) && (hasFolderChoice || canCreateFolder)}
+{#if entryDraft.current && (config || isNestedCollection(collection) || !!entryDraft.current.currentPath) && (hasFolderChoice || canCreateFolder)}
   <FieldEditorGroup>
     <header role="none">
       <h4 role="none" id="{fieldId}-label">{_('entry_parent_folder')}</h4>

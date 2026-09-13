@@ -37,6 +37,7 @@
   import {
     getEntryDirPath,
     getMetaPathConfig,
+    isNestedCollection,
     isNestedFolder,
     nestedFilterPath,
   } from '$lib/services/contents/collection/nested';
@@ -286,9 +287,10 @@
     if (routeType === 'new' && !subPath) {
       // Decap CMS passes the folder for a new entry in a nested collection as `?path=`
       const initialPath =
-        (getMetaPathConfig(collection) || isNestedCollection(collection))
-          ? (params.path ?? nestedFilterPath.current)
-          : undefined;
+        params.path ??
+        ((getMetaPathConfig(collection) || isNestedCollection(collection))
+          ? nestedFilterPath.current
+          : undefined);
 
       if (initialPath !== undefined) {
         delete params.path;

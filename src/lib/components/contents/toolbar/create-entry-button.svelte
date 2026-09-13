@@ -50,7 +50,6 @@
     const path =
       !index &&
       selectedCollection.current &&
-      (getMetaPathConfig(selectedCollection.current) || isNestedCollection(selectedCollection.current)) &&
       nestedFilterPath.current
         ? `?path=${encodeFilePath(nestedFilterPath.current)}`
         : '';
