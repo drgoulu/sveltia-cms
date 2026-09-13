@@ -13,6 +13,7 @@
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { preparePreviewTemplateProps } from '$lib/services/contents/editor/preview-templates';
   import { shadowDraft } from '$lib/services/contents/preview/shadow-draft.svelte';
+  import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
 
   /**
    * @import { EntryDraft, InternalLocaleCode } from '$lib/types/private';
@@ -52,12 +53,13 @@
       : undefined,
   );
 
+  const valueMap = $derived(getValueMapSnapshot(entryDraft.current, locale));
+
   // Sync draft to Hugo shadow file whenever values change
   $effect(() => {
-    if (entryDraft.current && shadowDraft.available && useHugoLivePreview) {
-      // Trigger dependency on current localized values
-      const _ = JSON.stringify(entryDraft.current.currentValues?.[locale]);
-      shadowDraft.scheduleSync(entryDraft.current, locale);
+    if (entryDraft.current && shadowDraft.available && useHugoLivePreview && valueMap) {
+      // getValueMapSnapshot tracks the proxy version reactively on every field edit
+      shadowDraft.scheduleSync(entryDraft.current, locale, valueMap);
     }
   });
 

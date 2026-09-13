@@ -1,4 +1,5 @@
 import { serializeContent } from '$lib/services/contents/draft/save/serialize';
+import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
 import { formatFrontMatter } from '$lib/services/contents/file/format';
 
 /**
@@ -79,11 +80,12 @@ class ShadowDraftService {
 
   /**
    * Schedule a sync of the current entry draft to the Hugo shadow draft.
-   * Debounced by 350ms to keep Hugo recompilation lightweight.
+   * Debounced by 300ms to keep Hugo recompilation lightweight.
    * @param {import('$lib/types/private').EntryDraft} draft Current draft.
    * @param {string} locale Current active locale.
+   * @param {import('$lib/types/private').FlattenedEntryContent} [valueMap] Latest field values.
    */
-  scheduleSync(draft, locale) {
+  scheduleSync(draft, locale, valueMap) {
     if (!this.available || !draft || !draft.collection) {
       return;
     }
@@ -93,19 +95,20 @@ class ShadowDraftService {
     }
 
     this.#timer = window.setTimeout(() => {
-      this.#performSync(draft, locale);
-    }, 350);
+      this.#performSync(draft, locale, valueMap);
+    }, 300);
   }
 
   /**
    * Immediately perform synchronization with Hugo.
    * @param {import('$lib/types/private').EntryDraft} draft
    * @param {string} locale
+   * @param {import('$lib/types/private').FlattenedEntryContent} [valueMap]
    */
-  async #performSync(draft, locale) {
+  async #performSync(draft, locale, valueMap) {
     try {
-      const valueMap = draft.currentValues?.[locale] ?? {};
-      const serialized = serializeContent({ draft, locale, valueMap: { ...valueMap } });
+      const values = valueMap ?? getValueMapSnapshot(draft, locale);
+      const serialized = serializeContent({ draft, locale, valueMap: { ...values } });
 
       // Inject Hugo preview options: draft: false, build.list: never, fixed url
       const previewPayload = {

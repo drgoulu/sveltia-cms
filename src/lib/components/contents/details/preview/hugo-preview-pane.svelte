@@ -17,28 +17,54 @@
   let iframeKey = $state(0);
   /** @type {HTMLIFrameElement | undefined} */
   let iframeElement = $state();
+  let iframeSrc = $state(shadowDraft.previewUrl);
+  let compiling = $state(false);
 
   const reloadIframe = () => {
-    iframeKey += 1;
+    iframeSrc = `${shadowDraft.previewUrl}?_t=${Date.now()}`;
   };
 
-  // When shadow draft confirms a sync, refresh iframe if needed
+  // When shadow draft confirms a sync, refresh iframe once Hugo has rebuilt
   $effect(() => {
-    if (shadowDraft.lastSync > 0) {
-      // Hugo Fast Render takes ~100ms; reload after a slight delay to ensure fresh HTML
-      const timeout = setTimeout(() => {
-        try {
-          if (iframeElement?.contentWindow) {
-            iframeElement.contentWindow.location.reload();
-          } else {
-            reloadIframe();
-          }
-        } catch {
-          reloadIframe();
-        }
-      }, 180);
+    const syncTime = shadowDraft.lastSync;
+    if (syncTime > 0) {
+      compiling = true;
+      let cancelled = false;
 
-      return () => clearTimeout(timeout);
+      const refresh = async () => {
+        // Hugo takes ~1.5-2.2s to rebuild on this site.
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+
+        for (let attempt = 0; attempt < 8; attempt += 1) {
+          if (cancelled) return;
+          try {
+            const res = await fetch(`${shadowDraft.previewUrl}?_chk=${Date.now()}`, {
+              cache: 'no-store',
+            });
+            if (res.ok) {
+              if (!cancelled) {
+                iframeSrc = `${shadowDraft.previewUrl}?_t=${Date.now()}`;
+                compiling = false;
+              }
+              return;
+            }
+          } catch {
+            // Keep waiting
+          }
+          await new Promise((resolve) => setTimeout(resolve, 400));
+        }
+
+        if (!cancelled) {
+          iframeSrc = `${shadowDraft.previewUrl}?_t=${Date.now()}`;
+          compiling = false;
+        }
+      };
+
+      refresh();
+
+      return () => {
+        cancelled = true;
+      };
     }
   });
 
@@ -50,9 +76,9 @@
 <div class="hugo-preview-container">
   <div class="preview-toolbar">
     <div class="status-indicator">
-      <span class="live-dot" class:syncing={shadowDraft.syncing}></span>
+      <span class="live-dot" class:syncing={shadowDraft.syncing || compiling}></span>
       <span class="status-text">
-        {#if shadowDraft.syncing}
+        {#if shadowDraft.syncing || compiling}
           Hugo en cours de compilation…
         {:else}
           Aperçu Hugo en direct
@@ -109,7 +135,7 @@
     {#key iframeKey}
       <iframe
         bind:this={iframeElement}
-        src={shadowDraft.previewUrl}
+        src={iframeSrc}
         title="Aperçu Hugo du brouillon"
         class="hugo-preview-iframe"
       ></iframe>
