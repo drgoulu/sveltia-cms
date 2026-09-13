@@ -113,10 +113,11 @@ class ShadowDraftService {
       const values = valueMap ?? getValueMapSnapshot(draft, locale);
       const serialized = serializeContent({ draft, locale, valueMap: { ...values } });
 
-      // Inject Hugo preview options: draft: false to ensure rendering
+      // Inject Hugo preview options: draft: false, slug: admin-preview to ensure fixed URL
       const previewPayload = {
         ...serialized,
         title: serialized.title || 'Aperçu du brouillon',
+        slug: 'admin-preview',
         date: serialized.date || new Date().toISOString(),
         draft: false,
       };
@@ -138,7 +139,7 @@ class ShadowDraftService {
       }
 
       const revision = Date.now();
-      const markdownWithRev = `${markdown}\n\n<!-- shadow-preview-rev:${revision} -->\n`;
+      const markdownWithRev = `${markdown}\n\n<span id="shadow-preview-rev" data-rev="${revision}" style="display:none"></span>\n`;
 
       this.syncing = true;
       const res = await fetch(this.#apiUrl, {

@@ -44,7 +44,7 @@
             });
             if (res.ok) {
               const html = await res.text();
-              if (!targetRev || html.includes(`<!-- shadow-preview-rev:${targetRev} -->`)) {
+              if (!targetRev || html.includes(`data-rev="${targetRev}"`)) {
                 if (!cancelled) {
                   iframeKey += 1;
                   iframeSrc = `${shadowDraft.previewUrl}?_t=${Date.now()}`;
