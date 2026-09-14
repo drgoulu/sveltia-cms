@@ -107,10 +107,10 @@ clipboard_error: Nie udało się skopiować do schowka.
 # Welcome and branding
 # Screen reader announcement when the sign-in page loads
 # {$name} is the app title shown on the sign-in screen, Sveltia CMS by default
-welcome_message: 'Witamy w {$name}'
+welcome_message: Witamy w {$name}
 # Footer text with CMS branding
 # {$name} is the CMS brand name shown in the footer, Sveltia CMS by default
-powered_by: 'Obsługiwane przez {$name}'
+powered_by: Obsługiwane przez {$name}
 
 # Shown during initial configuration and data loading
 loading_cms_config: Ładowanie konfiguracji CMS…
@@ -120,7 +120,7 @@ loading_site_data_error: Wystąpił błąd podczas ładowania danych witryny.
 # OAuth and token authentication
 # Primary sign-in button label for OAuth providers (GitHub, GitLab, etc.)
 # {$service} is the sign-in provider label, such as GitHub or GitLab
-sign_in_with_x: 'Zaloguj się przez {$service}'
+sign_in_with_x: Zaloguj się przez {$service}
 
 # Access token dialog: alternative authentication method
 sign_in_using_access_token: Zaloguj się za pomocą tokenu dostępu
@@ -164,7 +164,7 @@ sign_in_error:
 # Backend and repository validation errors
 # Shown when the configured backend or repository is invalid or inaccessible
 # {$name} is the backend display name like Forgejo and {$version} is the minimum supported version
-backend_unsupported_version: 'Backend {$name} wymaga wersji {$name} {$version} lub nowszej.'
+backend_unsupported_version: Backend {$name} wymaga wersji {$name} {$version} lub nowszej.
 # {$repo} is the repository identifier, typically in owner/repo format
 repository_no_access: Nie masz dostępu do repozytorium “{$repo}”.
 repository_not_found: Repozytorium “{$repo}” nie istnieje.
@@ -207,7 +207,7 @@ sign_in_with_mobile_instruction: Zeskanuj poniższy kod QR telefonem lub tablete
 # Account menu: user status and repository mode indicators
 # Shown at the top of the account dropdown menu
 # {$name} is the signed-in user’s login name
-signed_in_as_x: 'Zalogowano jako {$name}'
+signed_in_as_x: Zalogowano jako {$name}
 working_with_local_repo: Praca z lokalnym repozytorium
 working_with_test_repo: Praca z repozytorium testowym
 
@@ -237,6 +237,11 @@ mobile_promo_button: Wypróbuj
 # {$locale} is the localized language name, e.g., ”French”
 new_language_available: Sveltia CMS jest teraz dostępny w języku {$locale}!
 change_language: Zmień język
+
+# Toast notification shown while the translation for the selected language is being downloaded
+# {$locale} is the localized language name, e.g., “French”
+switching_language: Przełączanie na {$locale}…
+locale_load_failed: Nie udało się wczytać tłumaczenia na {$locale}. Spróbuj ponownie później.
 
 # Site and page navigation
 # Toolbar button aria-label for visiting the live site
@@ -284,7 +289,7 @@ release_notes: Informacje o wydaniu
 announcements: Ogłoszenia
 # Version badge aria-label in the release notes menu item
 # {$version} is the current app version string
-version_x: 'Wersja {$version}'
+version_x: Wersja {$version}
 # Additional help menu items
 report_issue: Zgłoś problem
 share_feedback: Podziel się opinią
@@ -350,30 +355,39 @@ viewing_asset_folder_list: Przeglądasz teraz listę folderów zasobów.
 viewing_x_collection: |
   .input {$count :integer}
   .match $count
-    0   {{ Przeglądasz teraz kolekcję “{$collection}”, która nie ma jeszcze żadnych wpisów. }}
-    one {{ Przeglądasz teraz kolekcję “{$collection}”, która ma jeden wpis. }}
-    *   {{ Przeglądasz teraz kolekcję “{$collection}”, która ma {$count} wpisów. }}
+    0    {{ Przeglądasz teraz kolekcję “{$collection}”, która nie ma jeszcze żadnych wpisów. }}
+    one  {{ Przeglądasz teraz kolekcję “{$collection}”, która ma jeden wpis. }}
+    few  {{ Przeglądasz teraz kolekcję “{$collection}”, która ma {$count} wpisy. }}
+    many {{ Przeglądasz teraz kolekcję “{$collection}”, która ma {$count} wpisów. }}
+    *    {{ Przeglądasz teraz kolekcję “{$collection}”, która ma {$count} wpisów. }}
 # Asset folder view announcements with asset counts
 # {$folder} is the folder label and {$count} is the number of assets in it
 viewing_x_asset_folder: |
   .input {$count :integer}
   .match $count
-    0   {{ Przeglądasz teraz folder zasobów “{$folder}”, który nie ma jeszcze żadnych zasobów. }}
-    one {{ Przeglądasz teraz folder zasobów “{$folder}”, który ma jeden zasób. }}
-    *   {{ Przeglądasz teraz folder zasobów “{$folder}”, który ma {$count} zasobów. }}
+    0    {{ Przeglądasz teraz folder zasobów “{$folder}”, który nie ma jeszcze żadnych zasobów. }}
+    one  {{ Przeglądasz teraz folder zasobów “{$folder}”, który ma jeden zasób. }}
+    few  {{ Przeglądasz teraz folder zasobów “{$folder}”, który ma {$count} zasoby. }}
+    many {{ Przeglądasz teraz folder zasobów “{$folder}”, który ma {$count} zasobów. }}
+    *    {{ Przeglądasz teraz folder zasobów “{$folder}”, który ma {$count} zasobów. }}
+# Cloud storage service view announcement
+# {$service} is the cloud storage service name, e.g. Uploadcare
+viewing_x_external_location: Przeglądasz teraz zasoby w usłudze {$service}.
 
 # Singleton file selection announcement
 # {$file} is the singleton file name
 singleton_selected_announcement: Naciśnij Enter, aby edytować plik “{$file}”.
 
-# Error messages: collection or file not found
+# Error messages: page, collection, folder or file not found
+page_not_found: Nie znaleziono strony.
 collection_not_found: Nie znaleziono kolekcji.
+asset_folder_not_found: Nie znaleziono folderu zasobów.
 file_not_found: Nie znaleziono pliku.
 
 # Selection count indicator
 # Shown in the toolbar when items are selected (e.g., ”2 of 10 selected”)
 # {$selected} is the selected item count and {$total} is the total item count
-x_of_x_selected: 'Zaznaczono {$selected} z {$total}'
+x_of_x_selected: Zaznaczono {$selected} z {$total}
 
 # View switcher: toggle between list and grid views
 switch_view: Przełącz widok
@@ -400,6 +414,10 @@ sort_keys:
   commit_author: Zaktualizowano przez
   # Sort by the last commit date
   commit_date: Zaktualizowano
+  # Sort by the date a file on a cloud storage service was last modified
+  last_modified: Zmodyfikowano
+  # Sort by file size
+  size: Rozmiar
   # Sort by the entry’s computed summary text
   _summary: Podsumowanie
   # Manual order defined by the user via drag-and-drop
@@ -411,6 +429,8 @@ ascending: '{$label}, A do Z'
 ascending_date: '{$label}, od najstarszych'
 descending: '{$label}, Z do A'
 descending_date: '{$label}, od najnowszych'
+ascending_number: '{$label}, od najmniejszego do największego'
+descending_number: '{$label}, od największego do najmniejszego'
 
 # Filter menu: button labels and options
 filter: Filtruj
@@ -439,12 +459,22 @@ hide_info: Ukryj informacje
 # Folder display labels when no specific path is configured
 all_assets: Wszystkie zasoby
 global_assets: Zasoby globalne
+# Virtual location listing the files that File/Image fields link to by URL, wherever they are hosted
+linked_files: Pliki dowiązane
 
 # ==============================================================================
 # Entry and Collection Actions
 # ==============================================================================
 # Strings related to creating, editing, and managing entries and collections.
 
+# Message shown while entries are still being retrieved: in the entry editor, when it was opened
+# with a direct link before all the data has been loaded, and on the Editorial Workflow page while
+# the pull requests are being fetched. {$count} selects the form
+loading_entries: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ładowanie wpisu… }}
+    *   {{ Ładowanie wpisów… }}
 # Error message when entry cannot be found
 entry_not_found: Nie znaleziono wpisu.
 
@@ -456,8 +486,10 @@ creating_entries_disabled_by_quota: Nie możesz dodać nowych wpisów do tej kol
 creating_entries_nearing_quota: |
   .input {$remaining :integer}
   .match $remaining
-    one {{ Ta kolekcja zbliża się do limitu {$quota} wpisów. Możesz utworzyć jeszcze tylko {$remaining} wpis. }}
-    *   {{ Ta kolekcja zbliża się do limitu {$quota} wpisów. Możesz utworzyć jeszcze tylko {$remaining} wpisów. }}
+    one  {{ Ta kolekcja zbliża się do limitu {$quota} wpisów. Możesz utworzyć jeszcze tylko {$remaining} wpis. }}
+    few  {{ Ta kolekcja zbliża się do limitu {$quota} wpisów. Możesz utworzyć jeszcze tylko {$remaining} wpisy. }}
+    many {{ Ta kolekcja zbliża się do limitu {$quota} wpisów. Możesz utworzyć jeszcze tylko {$remaining} wpisów. }}
+    *    {{ Ta kolekcja zbliża się do limitu {$quota} wpisów. Możesz utworzyć jeszcze tylko {$remaining} wpisów. }}
 
 # Navigation: back links and list labels
 back_to_collection: Powrót do kolekcji
@@ -482,17 +514,21 @@ search_results_for_x: Wyniki wyszukiwania dla “{$terms}”
 viewing_entry_search_results: |
   .input {$count :integer}
   .match $count
-    0   {{ Przeglądasz teraz wyniki wyszukiwania dla “{$terms}”. Nie znaleziono żadnych wpisów. }}
-    one {{ Przeglądasz teraz wyniki wyszukiwania dla “{$terms}”. Znaleziono jeden wpis. }}
-    *   {{ Przeglądasz teraz wyniki wyszukiwania dla “{$terms}”. Znaleziono {$count} wpisów. }}
+    0    {{ Przeglądasz teraz wyniki wyszukiwania dla “{$terms}”. Nie znaleziono żadnych wpisów. }}
+    one  {{ Przeglądasz teraz wyniki wyszukiwania dla “{$terms}”. Znaleziono jeden wpis. }}
+    few  {{ Przeglądasz teraz wyniki wyszukiwania dla “{$terms}”. Znaleziono {$count} wpisy. }}
+    many {{ Przeglądasz teraz wyniki wyszukiwania dla “{$terms}”. Znaleziono {$count} wpisów. }}
+    *    {{ Przeglądasz teraz wyniki wyszukiwania dla “{$terms}”. Znaleziono {$count} wpisów. }}
 # Asset search results with counts
 # {$terms} is the search query and {$count} is the number of matching assets
 viewing_asset_search_results: |
   .input {$count :integer}
   .match $count
-    0   {{ Przeglądasz teraz wyniki wyszukiwania dla “{$terms}”. Nie znaleziono żadnych zasobów. }}
-    one {{ Przeglądasz teraz wyniki wyszukiwania dla “{$terms}”. Znaleziono jeden zasób. }}
-    *   {{ Przeglądasz teraz wyniki wyszukiwania dla “{$terms}”. Znaleziono {$count} zasobów. }}
+    0    {{ Przeglądasz teraz wyniki wyszukiwania dla “{$terms}”. Nie znaleziono żadnych zasobów. }}
+    one  {{ Przeglądasz teraz wyniki wyszukiwania dla “{$terms}”. Znaleziono jeden zasób. }}
+    few  {{ Przeglądasz teraz wyniki wyszukiwania dla “{$terms}”. Znaleziono {$count} zasoby. }}
+    many {{ Przeglądasz teraz wyniki wyszukiwania dla “{$terms}”. Znaleziono {$count} zasobów. }}
+    *    {{ Przeglądasz teraz wyniki wyszukiwania dla “{$terms}”. Znaleziono {$count} zasobów. }}
 
 # Result count labels
 # Used in search result headings to show counts
@@ -500,16 +536,20 @@ viewing_asset_search_results: |
 x_entries: |
   .input {$count :integer}
   .match $count
-    0   {{ Brak wpisów }}
-    one {{ {$count} wpis }}
-    *   {{ {$count} wpisów }}
+    0    {{ Brak wpisów }}
+    one  {{ {$count} wpis }}
+    few  {{ {$count} wpisy }}
+    many {{ {$count} wpisów }}
+    *    {{ {$count} wpisów }}
 # {$count} is the number of matching assets
 x_assets: |
   .input {$count :integer}
   .match $count
-    0   {{ Brak zasobów }}
-    one {{ {$count} zasób }}
-    *   {{ {$count} zasobów }}
+    0    {{ Brak zasobów }}
+    one  {{ {$count} zasób }}
+    few  {{ {$count} zasoby }}
+    many {{ {$count} zasobów }}
+    *    {{ {$count} zasobów }}
 
 # Empty state messages
 no_files_found: Nie znaleziono plików.
@@ -526,10 +566,12 @@ upload_assets: Prześlij nowe zasoby
 # Edit options menu: button and item labels
 edit_options: Opcje edycji
 show_edit_options: Pokaż opcje edycji
+# Copy menu aria-label
+copy_options: Opcje kopiowania
 # Edit menu items with specific asset names
 edit_asset: Edytuj zasób
 # {$name} is the selected asset name
-edit_x: 'Edytuj {$name}'
+edit_x: Edytuj {$name}
 
 # Asset text editor: switch for line wrapping
 wrap_long_lines: Zawijaj długie wiersze
@@ -537,25 +579,35 @@ wrap_long_lines: Zawijaj długie wiersze
 # Rename asset: dialog and validation
 rename_asset: Zmień nazwę zasobu
 # {$name} is the current asset name
-rename_x: 'Zmień nazwę {$name}'
+rename_x: Zmień nazwę {$name}
 # Dialog body text indicating how many entries reference this asset
 # {$count} is the number of entries that currently reference the asset
 enter_new_name_for_asset: |
   .input {$count :integer}
   .match $count
-    0   {{ Wprowadź nową nazwę poniżej. }}
-    one {{ Wprowadź nową nazwę poniżej. Wpis używający tego zasobu zostanie również zaktualizowany. }}
-    *   {{ Wprowadź nową nazwę poniżej. {$count} wpisów używających tego zasobu zostanie również zaktualizowanych. }}
+    0    {{ Wprowadź nową nazwę poniżej. }}
+    one  {{ Wprowadź nową nazwę poniżej. Wpis używający tego zasobu zostanie również zaktualizowany. }}
+    few  {{ Wprowadź nową nazwę poniżej. {$count} wpisy używające tego zasobu zostaną również zaktualizowane. }}
+    many {{ Wprowadź nową nazwę poniżej. {$count} wpisów używających tego zasobu zostanie również zaktualizowanych. }}
+    *    {{ Wprowadź nową nazwę poniżej. {$count} wpisów używających tego zasobu zostanie również zaktualizowanych. }}
 # Validation errors for asset renaming
 enter_new_name_for_asset_error:
   empty: Nazwa pliku nie może być pusta.
   character: Nazwa pliku nie może zawierać znaków specjalnych.
   duplicate: Ta nazwa pliku jest już używana przez inny zasób.
+# Confirmation dialog shown when the file extension is changed while renaming an asset
+change_file_extension: Zmień rozszerzenie pliku
+# {$oldExtension} and {$newExtension} are file extensions without a leading dot, e.g. png
+confirm_file_extension_change:
+  change: Czy na pewno chcesz zmienić rozszerzenie z “.{$oldExtension}” na “.{$newExtension}”?
+  add: Czy na pewno chcesz dodać rozszerzenie “.{$newExtension}”?
+  remove: Czy na pewno chcesz usunąć rozszerzenie “.{$oldExtension}”?
+file_extension_change_warning: Plik może być wyświetlany lub obsługiwany nieprawidłowo, jeśli rozszerzenie nie odpowiada rzeczywistemu formatowi pliku.
 
 # Replace asset: menu item and dialog title
 replace_asset: Zastąp zasób
 # {$name} is the asset being replaced
-replace_x: 'Zastąp {$name}'
+replace_x: Zastąp {$name}
 
 # File selection prompts: drop zones and file pickers
 # Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
@@ -642,8 +694,10 @@ confirm_deleting_this_asset: Czy na pewno chcesz usunąć ten zasób?
 confirm_deleting_selected_assets: |
   .input {$count :integer}
   .match $count
-    one {{ Czy na pewno chcesz usunąć zaznaczony zasób? }}
-    *   {{ Czy na pewno chcesz usunąć zaznaczone {$count} zasoby? }}
+    one  {{ Czy na pewno chcesz usunąć zaznaczony zasób? }}
+    few  {{ Czy na pewno chcesz usunąć zaznaczone {$count} zasoby? }}
+    many {{ Czy na pewno chcesz usunąć zaznaczonych {$count} zasobów? }}
+    *    {{ Czy na pewno chcesz usunąć zaznaczonych {$count} zasobów? }}
 confirm_deleting_all_assets: Czy na pewno chcesz usunąć wszystkie zasoby?
 
 # Delete entries: dialog titles and confirmation messages
@@ -661,18 +715,24 @@ delete_selected_entries: |
     *   {{ Usuń zaznaczone wpisy }}
 confirm_deleting_this_entry: Czy na pewno chcesz usunąć ten wpis?
 confirm_deleting_this_entry_with_assets: Czy na pewno chcesz usunąć ten wpis i powiązane zasoby?
+# Error notification shown when an entry could not be deleted
+deleting_entry_failed: Nie udało się usunąć wpisu. Spróbuj ponownie.
 # {$count} is the number of selected entries
 confirm_deleting_selected_entries: |
   .input {$count :integer}
   .match $count
-    one {{ Czy na pewno chcesz usunąć zaznaczony wpis? }}
-    *   {{ Czy na pewno chcesz usunąć zaznaczone {$count} wpisy? }}
+    one  {{ Czy na pewno chcesz usunąć zaznaczony wpis? }}
+    few  {{ Czy na pewno chcesz usunąć zaznaczone {$count} wpisy? }}
+    many {{ Czy na pewno chcesz usunąć zaznaczonych {$count} wpisów? }}
+    *    {{ Czy na pewno chcesz usunąć zaznaczonych {$count} wpisów? }}
 # {$count} is the number of selected entries whose associated assets would also be removed
 confirm_deleting_selected_entries_with_assets: |
   .input {$count :integer}
   .match $count
-    one {{ Czy na pewno chcesz usunąć zaznaczony wpis i powiązane zasoby? }}
-    *   {{ Czy na pewno chcesz usunąć zaznaczone {$count} wpisy i powiązane zasoby? }}
+    one  {{ Czy na pewno chcesz usunąć zaznaczony wpis i powiązane zasoby? }}
+    few  {{ Czy na pewno chcesz usunąć zaznaczone {$count} wpisy i powiązane zasoby? }}
+    many {{ Czy na pewno chcesz usunąć zaznaczonych {$count} wpisów i powiązane zasoby? }}
+    *    {{ Czy na pewno chcesz usunąć zaznaczonych {$count} wpisów i powiązane zasoby? }}
 confirm_deleting_all_entries: Czy na pewno chcesz usunąć wszystkie wpisy?
 confirm_deleting_all_entries_with_assets: Czy na pewno chcesz usunąć wszystkie wpisy i powiązane zasoby?
 
@@ -715,8 +775,10 @@ confirm_replacing_file: '“{$name}” zostanie zastąpiony tym plikiem:'
 confirm_uploading_files: |
   .input {$count :integer}
   .match $count
-    one {{ Ten plik zostanie zapisany w folderze “{$folder}”: }}
-    *   {{ Te {$count} pliki zostaną zapisane w folderze “{$folder}”: }}
+    one  {{ Ten plik zostanie zapisany w folderze “{$folder}”: }}
+    few  {{ Te {$count} pliki zostaną zapisane w folderze “{$folder}”: }}
+    many {{ Tych {$count} plików zostanie zapisanych w folderze “{$folder}”: }}
+    *    {{ Tych {$count} plików zostanie zapisanych w folderze “{$folder}”: }}
 
 # File size validation
 # Warning section for files exceeding size limits
@@ -728,20 +790,44 @@ warning_oversized_files: |
     one {{ Ten plik nie może zostać przesłany, ponieważ przekracza maksymalny rozmiar {$size}. Zmniejsz jego rozmiar lub wybierz inny plik. }}
     *   {{ Te pliki nie mogą zostać przesłane, ponieważ przekraczają maksymalny rozmiar {$size}. Zmniejsz ich rozmiary lub wybierz inne pliki. }}
 
+# File integrity validation
+# Warning section for files that cannot be decoded
+invalid_files: Nieprawidłowe pliki
+# {$count} is the number of invalid files
+warning_invalid_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ten plik nie może zostać przesłany, ponieważ jest uszkodzony lub jego zawartość nie odpowiada rozszerzeniu pliku. Zdarza się to często, gdy zdjęcie zostało przemianowane zamiast przekonwertowane, np. obraz HEIC zapisany jako plik JPEG. Przekonwertuj plik i spróbuj ponownie. }}
+    *   {{ Te pliki nie mogą zostać przesłane, ponieważ są uszkodzone lub ich zawartość nie odpowiada rozszerzeniom plików. Zdarza się to często, gdy zdjęcia zostały przemianowane zamiast przekonwertowane, np. obrazy HEIC zapisane jako pliki JPEG. Przekonwertuj pliki i spróbuj ponownie. }}
+
+# File format validation when replacing an asset
+# Warning section for replacement files that are in a different format
+mismatched_files: Pliki o niezgodnym formacie
+# {$name} is the name of the asset being replaced and {$count} is the number of mismatched files
+warning_mismatched_files: |
+  .input {$count :integer}
+  .match $count
+    one {{ Ten plik nie może zastąpić “{$name}”, ponieważ ma inny format. Przekonwertuj plik na ten sam format i spróbuj ponownie. }}
+    *   {{ Te pliki nie mogą zastąpić “{$name}”, ponieważ mają inny format. Przekonwertuj pliki na ten sam format i spróbuj ponownie. }}
+
 # File name conflict resolution
 # {$count} is the number of conflicting file names in the target folder
 file_name_conflict_confirmation: |
   .input {$count :integer}
   .match $count
-    one {{ Plik o takiej samej nazwie już istnieje w tym folderze. Czy chcesz go zastąpić? }}
-    *   {{ {$count} plików o takich samych nazwach już istnieje w tym folderze. Czy chcesz je zastąpić? }}
+    one  {{ Plik o takiej samej nazwie już istnieje w tym folderze. Czy chcesz go zastąpić? }}
+    few  {{ {$count} pliki o takich samych nazwach już istnieją w tym folderze. Czy chcesz je zastąpić? }}
+    many {{ {$count} plików o takich samych nazwach już istnieje w tym folderze. Czy chcesz je zastąpić? }}
+    *    {{ {$count} plików o takich samych nazwach już istnieje w tym folderze. Czy chcesz je zastąpić? }}
 # {$name} is the conflicting file name when there is exactly one conflict; {$count} is the total conflict count
 file_name_conflict_confirmation_with_name: |
   .input {$count :integer}
   .input {$name :string}
   .match $count
-    one {{ Plik o nazwie “{$name}” już istnieje w tym folderze. Czy chcesz go zastąpić? }}
-    *   {{ {$count} plików o takich samych nazwach już istnieje w tym folderze. Czy chcesz je zastąpić? }}
+    one  {{ Plik o nazwie “{$name}” już istnieje w tym folderze. Czy chcesz go zastąpić? }}
+    few  {{ {$count} pliki o takich samych nazwach już istnieją w tym folderze. Czy chcesz je zastąpić? }}
+    many {{ {$count} plików o takich samych nazwach już istnieje w tym folderze. Czy chcesz je zastąpić? }}
+    *    {{ {$count} plików o takich samych nazwach już istnieje w tym folderze. Czy chcesz je zastąpić? }}
 file_name_conflict_resolution: Rozwiązywanie konfliktu nazw plików
 # Option to keep both files (rename the new one)
 keep_both: Zachowaj oba
@@ -749,6 +835,9 @@ keep_both: Zachowaj oba
 # Upload progress and error messages
 uploading_files_progress: Przesyłanie…
 uploading_files_failed: Przesyłanie nie powiodło się.
+# Errors shown when a file on a cloud storage service could not be deleted or renamed
+deleting_assets_failed: Usuwanie nie powiodło się.
+renaming_asset_failed: Zmiana nazwy nie powiodła się.
 
 # File metadata display
 # Appended when a file was auto-converted (e.g., HEIF to JPEG)
@@ -784,8 +873,10 @@ entry_duplicated: Wpis zduplikowany jako nowy szkic.
 entry_validation_errors: |
   .input {$count :integer}
   .match $count
-    one {{ Jedno pole zawiera błąd. Popraw go, aby zapisać wpis. }}
-    *   {{ {$count} pól zawiera błędy. Popraw je, aby zapisać wpis. }}
+    one  {{ Jedno pole zawiera błąd. Popraw go, aby zapisać wpis. }}
+    few  {{ {$count} pola zawierają błędy. Popraw je, aby zapisać wpis. }}
+    many {{ {$count} pól zawiera błędy. Popraw je, aby zapisać wpis. }}
+    *    {{ {$count} pól zawiera błędy. Popraw je, aby zapisać wpis. }}
 
 # ==============================================================================
 # Success Notifications
@@ -797,66 +888,97 @@ entry_validation_errors: |
 entry_saved: |
   .input {$count :integer}
   .match $count
-    one {{ Wpis zapisany. }}
-    *   {{ Zapisano {$count} wpisów. }}
+    one  {{ Wpis zapisany. }}
+    few  {{ Zapisano {$count} wpisy. }}
+    many {{ Zapisano {$count} wpisów. }}
+    *    {{ Zapisano {$count} wpisów. }}
 entry_saved_and_published: |
   .input {$count :integer}
   .match $count
-    one {{ Wpis zapisany i opublikowany. }}
-    *   {{ Zapisano i opublikowano {$count} wpisów. }}
+    one  {{ Wpis zapisany i opublikowany. }}
+    few  {{ Zapisano i opublikowano {$count} wpisy. }}
+    many {{ Zapisano i opublikowano {$count} wpisów. }}
+    *    {{ Zapisano i opublikowano {$count} wpisów. }}
 entries_deleted: |
   .input {$count :integer}
   .match $count
-    one {{ Wpis usunięty. }}
-    *   {{ Usunięto {$count} wpisów. }}
+    one  {{ Wpis usunięty. }}
+    few  {{ Usunięto {$count} wpisy. }}
+    many {{ Usunięto {$count} wpisów. }}
+    *    {{ Usunięto {$count} wpisów. }}
 
 # Asset operations
 # {$count} is the number of assets or asset-derived values affected by the operation
 assets_saved: |
   .input {$count :integer}
   .match $count
-    one {{ Zasób zapisany. }}
-    *   {{ Zapisano {$count} zasobów. }}
+    one  {{ Zasób zapisany. }}
+    few  {{ Zapisano {$count} zasoby. }}
+    many {{ Zapisano {$count} zasobów. }}
+    *    {{ Zapisano {$count} zasobów. }}
 assets_saved_and_published: |
   .input {$count :integer}
   .match $count
-    one {{ Zasób zapisany i opublikowany. }}
-    *   {{ Zapisano i opublikowano {$count} zasobów. }}
+    one  {{ Zasób zapisany i opublikowany. }}
+    few  {{ Zapisano i opublikowano {$count} zasoby. }}
+    many {{ Zapisano i opublikowano {$count} zasobów. }}
+    *    {{ Zapisano i opublikowano {$count} zasobów. }}
 asset_urls_copied: |
   .input {$count :integer}
   .match $count
-    one {{ Adres URL skopiowany do schowka. }}
-    *   {{ Skopiowano {$count} adresów URL do schowka. }}
+    one  {{ Adres URL skopiowany do schowka. }}
+    few  {{ Skopiowano {$count} adresy URL do schowka. }}
+    many {{ Skopiowano {$count} adresów URL do schowka. }}
+    *    {{ Skopiowano {$count} adresów URL do schowka. }}
 asset_paths_copied: |
   .input {$count :integer}
   .match $count
-    one {{ Ścieżka pliku skopiowana do schowka. }}
-    *   {{ Skopiowano {$count} ścieżek plików do schowka. }}
+    one  {{ Ścieżka pliku skopiowana do schowka. }}
+    few  {{ Skopiowano {$count} ścieżki plików do schowka. }}
+    many {{ Skopiowano {$count} ścieżek plików do schowka. }}
+    *    {{ Skopiowano {$count} ścieżek plików do schowka. }}
+asset_ids_copied: |
+  .input {$count :integer}
+  .match $count
+    one  {{ Identyfikator pliku skopiowano do schowka. }}
+    few  {{ Skopiowano {$count} identyfikatory plików do schowka. }}
+    many {{ Skopiowano {$count} identyfikatorów plików do schowka. }}
+    *    {{ Skopiowano {$count} identyfikatorów plików do schowka. }}
 asset_data_copied: |
   .input {$count :integer}
   .match $count
-    one {{ Dane pliku skopiowane do schowka. }}
-    *   {{ Skopiowano dane {$count} plików do schowka. }}
+    one  {{ Dane pliku skopiowane do schowka. }}
+    few  {{ Skopiowano dane {$count} plików do schowka. }}
+    many {{ Skopiowano dane {$count} plików do schowka. }}
+    *    {{ Skopiowano dane {$count} plików do schowka. }}
 assets_downloaded: |
   .input {$count :integer}
   .match $count
-    one {{ Zasób pobrany. }}
-    *   {{ Pobrano {$count} zasobów. }}
+    one  {{ Zasób pobrany. }}
+    few  {{ Pobrano {$count} zasoby. }}
+    many {{ Pobrano {$count} zasobów. }}
+    *    {{ Pobrano {$count} zasobów. }}
 assets_moved: |
   .input {$count :integer}
   .match $count
-    one {{ Zasób przeniesiony. }}
-    *   {{ Przeniesiono {$count} zasobów. }}
+    one  {{ Zasób przeniesiony. }}
+    few  {{ Przeniesiono {$count} zasoby. }}
+    many {{ Przeniesiono {$count} zasobów. }}
+    *    {{ Przeniesiono {$count} zasobów. }}
 assets_renamed: |
   .input {$count :integer}
   .match $count
-    one {{ Zmieniono nazwę zasobu. }}
-    *   {{ Zmieniono nazwy {$count} zasobów. }}
+    one  {{ Zmieniono nazwę zasobu. }}
+    few  {{ Zmieniono nazwy {$count} zasobów. }}
+    many {{ Zmieniono nazwy {$count} zasobów. }}
+    *    {{ Zmieniono nazwy {$count} zasobów. }}
 assets_deleted: |
   .input {$count :integer}
   .match $count
-    one {{ Zasób usunięty. }}
-    *   {{ Usunięto {$count} zasobów. }}
+    one  {{ Zasób usunięty. }}
+    few  {{ Usunięto {$count} zasoby. }}
+    many {{ Usunięto {$count} zasobów. }}
+    *    {{ Usunięto {$count} zasobów. }}
 
 # ==============================================================================
 # Content Editor
@@ -903,6 +1025,7 @@ show_editor_options: Pokaż opcje edytora
 editor_options: Opcje edytora
 
 # Preview controls
+show_second_pane: Pokaż drugi panel
 show_preview: Pokaż podgląd
 
 # Editor settings
@@ -932,7 +1055,7 @@ content_preview: Podgląd treści
 # Locale content options
 # {$locale} is the localized language name for the content options menu, e.g., English
 show_content_options_x_locale: Pokaż opcje treści {$locale}
-content_options_x_locale: 'Opcje treści {$locale}'
+content_options_x_locale: Opcje treści {$locale}
 
 # Field container labels
 # {$field} is the field’s display label
@@ -948,9 +1071,9 @@ unsupported_field_type_x: 'Nieobsługiwany typ pola: {$name}'
 
 # Locale management actions
 # {$locale} is the localized language name being enabled or disabled, e.g., English
-enable_x_locale: 'Włącz {$locale}'
-reenable_x_locale: 'Włącz ponownie {$locale}'
-disable_x_locale: 'Wyłącz {$locale}'
+enable_x_locale: Włącz {$locale}
+reenable_x_locale: Włącz ponownie {$locale}
+disable_x_locale: Wyłącz {$locale}
 
 # Locale status messages
 # {$locale} is the localized language name affected by the status change, e.g., English
@@ -960,13 +1083,38 @@ locale_x_now_disabled: Treść {$locale} jest teraz wyłączona. Zostanie usuni�
 # Repository and site links
 view_in_repository: Wyświetl w repozytorium
 # {$service} is the external service label, such as GitHub or GitLab
-view_on_x: 'Wyświetl na {$service}'
+view_on_x: Wyświetl na {$service}
 view_on_live_site: Wyświetl na stronie
+
+# Deploy preview links. The URL comes from the CI/CD provider connected to the Git backend, so the
+# states mirror the build’s: it may be queued, live or failed. Keep the wording free of CI jargon,
+# as editors are often non-technical.
+deploy_preview:
+  # Button and menu item shown when a preview URL is available for an unpublished entry
+  view: Zobacz podgląd
+  # Shown while the site is still being built, with or without a URL to open yet
+  building: Podgląd jest wciąż budowany.
+  # Shown when the build failed, so no preview is available
+  failed: Nie udało się zbudować podglądu.
+  # Shown briefly while the CI/CD provider is being queried
+  checking: Sprawdzanie podglądu…
+  # Menu item to query the CI/CD provider again, offered once the automatic checks gave up
+  check_again: Sprawdź podgląd
+  # Button label while the CMS is waiting for the provider to build a preview of this entry. The
+  # control is disabled meanwhile, because the live site holds the published version, or nothing at
+  # all when the entry is new
+  awaiting: Sprawdzanie podglądu
+  # Short forms of the states above, used on the compact badge shown on an Editorial Workflow card,
+  # where the full sentences don’t fit. A lookup in flight gets no badge, because it’s over in
+  # moments
+  short:
+    building: Budowanie…
+    failed: Budowanie nie powiodło się
 
 # Content copying from other locales
 copy_from: Kopiuj z…
 # {$locale} is the localized language name of the source content being copied, e.g., English
-copy_from_x: 'Kopiuj z {$locale}'
+copy_from_x: Kopiuj z {$locale}
 
 # Translation features
 translation_options: Opcje tłumaczenia
@@ -979,7 +1127,7 @@ translate_fields: |
     *   {{ Przetłumacz pola }}
 translate_from: Przetłumacz z…
 # {$locale} is the localized language name of the source content being translated, e.g., English
-translate_from_x: 'Przetłumacz z {$locale}'
+translate_from_x: Przetłumacz z {$locale}
 
 # Revert changes
 revert_changes: Cofnij zmiany
@@ -991,6 +1139,23 @@ edit_slug_error:
   empty: Przyjazny link nie może być pusty.
   invalid: Przyjazny link nie może zawierać znaków specjalnych, w tym ukośników i spacji.
   duplicate: Ten przyjazny link jest już używany przez inny wpis.
+
+# Entry path editing in a nested collection
+# Heading for the parent folder picker shown when the `meta.path` option is enabled
+entry_parent_folder: Folder nadrzędny
+new_parent_folder: Nowy folder
+new_parent_folder_create: Utwórz
+new_parent_folder_name: Nazwa folderu
+# {$folder} is the name of the folder the new one will be created in
+new_parent_folder_description: Nowy folder zostanie utworzony w “{$folder}”.
+new_parent_folder_error:
+  empty: Nazwa folderu nie może być pusta.
+  invalid: Nazwa folderu nie może zawierać ukośników ani zaczynać się od kropki i musi zawierać litery lub cyfry.
+  duplicate: Folder o tej nazwie już tutaj istnieje.
+edit_path_error:
+  invalid: Ścieżka nie może zawierać segmentów względnych, takich jak “..”.
+  recursive: Wpisu nie można przenieść do jednego z jego własnych podfolderów.
+  duplicate: Ta ścieżka jest już używana przez inny wpis.
 
 # Required field indicator
 required: Wymagane
@@ -1006,18 +1171,22 @@ editor:
     complete: |
       .input {$count :integer}
       .match $count
-        0   {{ Nie przetłumaczono żadnych pól z {$source}. }}
-        one {{ Przetłumaczono pole z {$source}. }}
-        *   {{ Przetłumaczono {$count} pól z {$source}. }}
+        0    {{ Nie przetłumaczono żadnych pól z {$source}. }}
+        one  {{ Przetłumaczono pole z {$source}. }}
+        few  {{ Przetłumaczono {$count} pola z {$source}. }}
+        many {{ Przetłumaczono {$count} pól z {$source}. }}
+        *    {{ Przetłumaczono {$count} pól z {$source}. }}
   copy:
     none: Brak treści do skopiowania.
     # {$source} is the source language name and {$count} is the number of copied fields
     complete: |
       .input {$count :integer}
       .match $count
-        0   {{ Nie skopiowano żadnych pól z {$source}. }}
-        one {{ Skopiowano pole z {$source}. }}
-        *   {{ Skopiowano {$count} pól z {$source}. }}
+        0    {{ Nie skopiowano żadnych pól z {$source}. }}
+        one  {{ Skopiowano pole z {$source}. }}
+        few  {{ Skopiowano {$count} pola z {$source}. }}
+        many {{ Skopiowano {$count} pól z {$source}. }}
+        *    {{ Skopiowano {$count} pól z {$source}. }}
 
 # ==============================================================================
 # Field Validation
@@ -1039,14 +1208,18 @@ validation:
     select: |
       .input {$min :integer}
       .match $min
-        one {{ Musisz wybrać co najmniej {$min} opcję. }}
-        *   {{ Musisz wybrać co najmniej {$min} opcji. }}
+        one  {{ Musisz wybrać co najmniej {$min} opcję. }}
+        few  {{ Musisz wybrać co najmniej {$min} opcje. }}
+        many {{ Musisz wybrać co najmniej {$min} opcji. }}
+        *    {{ Musisz wybrać co najmniej {$min} opcji. }}
     # {$min} is the minimum number of list items
     add: |
       .input {$min :integer}
       .match $min
-        one {{ Musisz dodać co najmniej {$min} element. }}
-        *   {{ Musisz dodać co najmniej {$min} elementów. }}
+        one  {{ Musisz dodać co najmniej {$min} element. }}
+        few  {{ Musisz dodać co najmniej {$min} elementy. }}
+        many {{ Musisz dodać co najmniej {$min} elementów. }}
+        *    {{ Musisz dodać co najmniej {$min} elementów. }}
 
   # Maximum value/count exceeded
   range_overflow:
@@ -1059,27 +1232,35 @@ validation:
     select: |
       .input {$max :integer}
       .match $max
-        one {{ Nie możesz wybrać więcej niż {$max} opcję. }}
-        *   {{ Nie możesz wybrać więcej niż {$max} opcji. }}
+        one  {{ Nie możesz wybrać więcej niż {$max} opcję. }}
+        few  {{ Nie możesz wybrać więcej niż {$max} opcje. }}
+        many {{ Nie możesz wybrać więcej niż {$max} opcji. }}
+        *    {{ Nie możesz wybrać więcej niż {$max} opcji. }}
     # {$max} is the maximum number of list items
     add: |
       .input {$max :integer}
       .match $max
-        one {{ Nie możesz dodać więcej niż {$max} element. }}
-        *   {{ Nie możesz dodać więcej niż {$max} elementów. }}
+        one  {{ Nie możesz dodać więcej niż {$max} element. }}
+        few  {{ Nie możesz dodać więcej niż {$max} elementy. }}
+        many {{ Nie możesz dodać więcej niż {$max} elementów. }}
+        *    {{ Nie możesz dodać więcej niż {$max} elementów. }}
 
   # String length constraints
   # {$min :integer} and {$max :integer} are character-count limits
   too_short: |
     .input {$min :integer}
     .match $min
-      one {{ Musisz wprowadzić co najmniej {$min} znak. }}
-      *   {{ Musisz wprowadzić co najmniej {$min} znaków. }}
+      one  {{ Musisz wprowadzić co najmniej {$min} znak. }}
+      few  {{ Musisz wprowadzić co najmniej {$min} znaki. }}
+      many {{ Musisz wprowadzić co najmniej {$min} znaków. }}
+      *    {{ Musisz wprowadzić co najmniej {$min} znaków. }}
   too_long: |
     .input {$max :integer}
     .match $max
-      one {{ Nie możesz wprowadzić więcej niż {$max} znak. }}
-      *   {{ Nie możesz wprowadzić więcej niż {$max} znaków. }}
+      one  {{ Nie możesz wprowadzić więcej niż {$max} znak. }}
+      few  {{ Nie możesz wprowadzić więcej niż {$max} znaki. }}
+      many {{ Nie możesz wprowadzić więcej niż {$max} znaków. }}
+      *    {{ Nie możesz wprowadzić więcej niż {$max} znaków. }}
 
   # Type validation errors
   type_mismatch:
@@ -1105,6 +1286,8 @@ entry_sidebar:
     title: Walidacja
     placeholder: Wyniki walidacji zostaną wyświetlone tutaj.
     no_errors_found: Nie znaleziono błędów.
+    # Button in the panel header that validates the entry on demand
+    validate: Sprawdź
 
   # History panel: shows entry commit history
   history:
@@ -1135,6 +1318,10 @@ viewing_x_asset_details: Przeglądasz szczegóły zasobu “{$name}”.
 # Asset editor container aria-label
 asset_editor: Edytor zasobów
 
+# Buttons to move between the listed assets in the asset editor
+previous_asset: Poprzedni zasób
+next_asset: Następny zasób
+
 # Preview unavailable message
 preview_unavailable: Podgląd niedostępny.
 
@@ -1151,6 +1338,13 @@ file_paths: |
   .match $count
     one {{ Ścieżka pliku }}
     *   {{ Ścieżki plików }}
+# Identifier of a file on a cloud storage service, e.g. an object key or a UUID
+# {$count} is the number of selected assets
+file_ids: |
+  .input {$count :integer}
+  .match $count
+    one {{ Identyfikator pliku }}
+    *   {{ Identyfikatory plików }}
 file_data: Dane pliku
 
 # ==============================================================================
@@ -1184,6 +1378,12 @@ map_lat_lng: Mapa pokazująca szerokość geograficzną {$latitude}, długość 
 remove_this_item: Usuń ten element
 move_up: Przenieś w górę
 move_down: Przenieś w dół
+# aria-label for the drag handle that reorders a list item. The item can be dragged with a pointer,
+# or moved with the arrow keys while the handle has focus
+reorder_item: Zmień kolejność elementu
+# aria-label for the text input holding one item of a simple List field, which has no subfield to
+# take a label from
+list_item_value: Wartość elementu
 
 # Add item button label
 # Example: ”Add Image”, ”Add Author”
@@ -1196,6 +1396,9 @@ add_item_below: Dodaj element poniżej
 
 # Variable-type list selector
 select_list_type: Wybierz typ listy
+
+# Variable-type mismatch
+unknown_variable_type: Nie można wyświetlić tego elementu z powodu nieznanego typu. Sprawdź konsolę przeglądarki, aby poznać szczegóły.
 
 # ==============================================================================
 # Field Widgets
@@ -1248,6 +1451,14 @@ assets_dialog:
   large_file:
     title: Duży plik
 
+  # Invalid file warning dialog
+  invalid_file:
+    title: Nieprawidłowy plik
+
+  # Warning dialog shown when files are rejected for more than one reason
+  rejected_files:
+    title: Nie można przesłać plików
+
   # Photo credit dialog (stock photos)
   photo_credit:
     title: Informacja o autorze zdjęcia
@@ -1262,23 +1473,29 @@ character_counter:
   min_max: |
     .input {$count :integer}
     .match $count
-      0   {{ Nie wprowadzono żadnych znaków. Minimum: {$min}. Maksimum: {$max}. }}
-      one {{ Wprowadzono {$count} znak. Minimum: {$min}. Maksimum: {$max}. }}
-      *   {{ Wprowadzono {$count} znaków. Minimum: {$min}. Maksimum: {$max}. }}
+      0    {{ Nie wprowadzono żadnych znaków. Minimum: {$min}. Maksimum: {$max}. }}
+      one  {{ Wprowadzono {$count} znak. Minimum: {$min}. Maksimum: {$max}. }}
+      few  {{ Wprowadzono {$count} znaki. Minimum: {$min}. Maksimum: {$max}. }}
+      many {{ Wprowadzono {$count} znaków. Minimum: {$min}. Maksimum: {$max}. }}
+      *    {{ Wprowadzono {$count} znaków. Minimum: {$min}. Maksimum: {$max}. }}
   # {$count} is the current character count and {$min} is the minimum allowed count
   min: |
     .input {$count :integer}
     .match $count
-      0   {{ Nie wprowadzono żadnych znaków. Minimum: {$min}. }}
-      one {{ Wprowadzono {$count} znak. Minimum: {$min}. }}
-      *   {{ Wprowadzono {$count} znaków. Minimum: {$min}. }}
+      0    {{ Nie wprowadzono żadnych znaków. Minimum: {$min}. }}
+      one  {{ Wprowadzono {$count} znak. Minimum: {$min}. }}
+      few  {{ Wprowadzono {$count} znaki. Minimum: {$min}. }}
+      many {{ Wprowadzono {$count} znaków. Minimum: {$min}. }}
+      *    {{ Wprowadzono {$count} znaków. Minimum: {$min}. }}
   # {$count} is the current character count and {$max} is the maximum allowed count
   max: |
     .input {$count :integer}
     .match $count
-      0   {{ Nie wprowadzono żadnych znaków. Maksimum: {$max}. }}
-      one {{ Wprowadzono {$count} znak. Maksimum: {$max}. }}
-      *   {{ Wprowadzono {$count} znaków. Maksimum: {$max}. }}
+      0    {{ Nie wprowadzono żadnych znaków. Maksimum: {$max}. }}
+      one  {{ Wprowadzono {$count} znak. Maksimum: {$max}. }}
+      few  {{ Wprowadzono {$count} znaki. Maksimum: {$max}. }}
+      many {{ Wprowadzono {$count} znaków. Maksimum: {$max}. }}
+      *    {{ Wprowadzono {$count} znaków. Maksimum: {$max}. }}
 
 # YouTube video player iframe title
 youtube_video_player: Odtwarzacz wideo YouTube
@@ -1380,11 +1597,11 @@ config:
   # Error location prefixes
   error_locator:
     # {$collection}, {$file}, {$component}, and {$field} are the offending config item names
-    collection: 'kolekcja {$collection}'
-    file: 'plik {$file}'
-    component: 'komponent {$component}'
+    collection: kolekcja {$collection}
+    file: plik {$file}
+    component: komponent {$component}
     # Don’t localize `{$field}`
-    field: 'pole `{$field}`'
+    field: pole `{$field}`
 
   # Configuration error messages
   error:
@@ -1404,6 +1621,8 @@ config:
     parse_failed_invalid_object: Plik konfiguracyjny nie jest prawidłowym obiektem JavaScript.
     parse_failed_unsupported_type: Plik konfiguracyjny nie jest prawidłowym typem pliku. Obsługiwane są tylko formaty YAML, TOML i JSON.
     no_collection: Kolekcje nie są zdefiniowane.
+    # Don’t localize `hide`
+    no_visible_collection: Co najmniej jedna kolekcja musi być widoczna. Sprawdź opcję `hide`.
     missing_backend: Backend nie jest zdefiniowany.
     missing_backend_name: Nazwa backendu nie jest zdefiniowana.
     # {$name} is the backend name from the CMS configuration
@@ -1417,11 +1636,19 @@ config:
     oauth_implicit_flow: Skonfigurowana metoda uwierzytelniania (implicit flow) nie jest obsługiwana w Sveltia CMS. Użyj innej <a>metody uwierzytelniania</a>.
     github_pkce_unsupported: Autoryzacja PKCE nie jest jeszcze obsługiwana z powodu ograniczeń GitHub. Użyj innej <a>metody uwierzytelniania</a>.
     oauth_no_app_id: Identyfikator aplikacji OAuth nie jest zdefiniowany.
+    # Don’t localize `open_authoring` and `editorial_workflow`
+    open_authoring_no_workflow: Opcja `open_authoring` wymaga trybu publikacji `editorial_workflow`. Szczegóły znajdziesz w <a>dokumentacji</a>.
     # Don’t localize `auth_methods`
     no_auth_methods: Opcja `auth_methods` musi zawierać co najmniej jedną metodę.
     missing_media_folder: Folder multimediów nie jest zdefiniowany.
     public_folder_relative_path: Skonfigurowany folder publiczny jest nieprawidłowy. Musi być ścieżką bezwzględną zaczynającą się od “/”.
     public_folder_absolute_url: Bezwzględny adres URL dla opcji folderu publicznego nie jest obsługiwany w Sveltia CMS.
+    # {$key} is the unsupported key found in the option map; Don’t localize `transformations`, `raster_image` and `svg`
+    invalid_transformation_key: Opcja `transformations` zawiera nieobsługiwany klucz `{$key}`. Musi to być `raster_image`, `svg` lub obsługiwany format obrazu rastrowego.
+    # {$key} is the transformation key; Don’t localize `quality`
+    invalid_transformation_quality: Opcja `quality` transformacji `{$key}` jest nieprawidłowa. Musi to być liczba całkowita od 0 do 100.
+    # {$prop} is either `width` or `height`; {$key} is the transformation key
+    invalid_transformation_size: Opcja `{$prop}` transformacji `{$key}` jest nieprawidłowa. Musi to być dodatnia liczba całkowita.
     # {$count} is the 1-based asset collection index in the configuration array. Don’t localize `name`
     missing_asset_collection_name: Kolekcja zasobów {$count} musi mieć opcję `name` zdefiniowaną jako niepusty ciąg znaków.
     # {$name} is the invalid or duplicate asset collection name
@@ -1436,6 +1663,24 @@ config:
     file_format_mismatch: Rozszerzenie `{$extension}` nie odpowiada formatowi `{$format}`.
     # {$slug} is the invalid slug template from the configuration; Don’t localize `path` and `slug`
     invalid_slug_slash: Szablon przyjaznego linku `{$slug}` jest nieprawidłowy, ponieważ nie może zawierać ukośników. Aby organizować wpisy w podfolderach, użyj opcji `path` zamiast `slug`.
+    # {$name} is the group name from the configuration; Don’t localize `reorder`, `group` and `view_groups`
+    invalid_reorder_group: Opcja `reorder` odwołuje się do grupy widoku o nazwie `{$name}`, ale taka grupa nie jest zdefiniowana w opcji `view_groups`.
+    # {$name} is the field name from the configuration; Don’t localize `sortable_fields`
+    invalid_sortable_field: Opcja `sortable_fields` odwołuje się do pola o nazwie `{$name}`, ale takie pole nie jest zdefiniowane w kolekcji.
+    # {$name} is the field name from the configuration; Don’t localize `view_groups`
+    invalid_view_group_field: Opcja `view_groups` odwołuje się do pola o nazwie `{$name}`, ale takie pole nie jest zdefiniowane w kolekcji.
+    # {$name} is the field name from the configuration; Don’t localize `view_filters`
+    invalid_view_filter_field: Opcja `view_filters` odwołuje się do pola o nazwie `{$name}`, ale takie pole nie jest zdefiniowane w kolekcji.
+    # {$count} is the 1-based view group index in the configuration array; Don’t localize `name`
+    missing_view_group_name: Grupa widoku {$count} musi mieć opcję `name` zdefiniowaną jako niepusty ciąg znaków.
+    # {$name} is the invalid or duplicate view group name
+    invalid_view_group_name: Nazwa grupy widoku `{$name}` jest nieprawidłowa. Nie może zawierać znaków specjalnych.
+    duplicate_view_group_name: Nazwy grup widoku muszą być unikalne, ale `{$name}` jest użyta więcej niż raz.
+    # {$count} is the 1-based view filter index in the configuration array; Don’t localize `name`
+    missing_view_filter_name: Filtr widoku {$count} musi mieć opcję `name` zdefiniowaną jako niepusty ciąg znaków.
+    # {$name} is the invalid or duplicate view filter name
+    invalid_view_filter_name: Nazwa filtru widoku `{$name}` jest nieprawidłowa. Nie może zawierać znaków specjalnych.
+    duplicate_view_filter_name: Nazwy filtrów widoku muszą być unikalne, ale `{$name}` jest użyta więcej niż raz.
     # {$count} is the 1-based collection index in the configuration array; Don’t localize `name`
     missing_collection_name: Kolekcja {$count} musi mieć opcję `name` zdefiniowaną jako niepusty ciąg znaków.
     # {$name} is the invalid or duplicate collection name
@@ -1483,14 +1728,50 @@ config:
     relation_field_invalid_value_field: Odwołanie do pola wartości `{$field}` jest nieprawidłowe lub pole nie jest zdefiniowane.
     unexpected: Nieoczekiwany błąd
 
+    # Schema validation errors, reported when the configuration doesn’t match the published JSON
+    # schema. In all of these, {$option} is a configuration option path such as `backend.name` or
+    # `view_filters[0].pattern`, relative to the collection, file or field named before it.
+    # {$type} is a value type name from `schema_value_type` below
+    schema_invalid_type: Opcja `{$option}` musi być {$type}.
+    # {$values} is a list of the values the option accepts
+    schema_invalid_enum: 'Opcja `{$option}` musi mieć jedną z tych wartości: {$values}.'
+    # {$value} is the only value the option accepts
+    schema_invalid_const: Opcja `{$option}` musi mieć wartość `{$value}`.
+    schema_invalid_empty_value: Opcja `{$option}` musi być pustym ciągiem znaków.
+    # {$count} is the exact number of items the option must have
+    schema_invalid_item_count: Opcja `{$option}` musi być tablicą o {$count} elementach.
+    schema_invalid_value: Opcja `{$option}` ma nieprawidłową wartość.
+    schema_missing_option: Opcja `{$option}` jest wymagana.
+    # {$options} is a list of options, one of which must be defined
+    schema_missing_one_of: 'Wymagana jest jedna z tych opcji: {$options}.'
+    # Value type names used in `schema_invalid_type`, each completing the sentence “The option must
+    # be …”
+    schema_value_type:
+      string: ciągiem znaków
+      number: liczbą
+      integer: liczbą całkowitą
+      boolean: wartością logiczną
+      array: tablicą
+      object: obiektem
+      'null': pusta
+
   # Warning messages (logged to console)
   warning:
     oauth_no_app_id: Identyfikator aplikacji OAuth nie jest zdefiniowany. Użytkownicy muszą podać token dostępu, aby się zalogować.
     editorial_workflow_unsupported: Obieg redakcyjny nie jest jeszcze obsługiwany w Sveltia CMS.
+    open_authoring_unsupported_backend: Open Authoring jest obecnie obsługiwany tylko z backendem GitHub.
     # {$prop} is the unsupported option name that will be ignored
     unsupported_ignored_option: Opcja `{$prop}` nie jest obsługiwana w Sveltia CMS. Zostanie zignorowana.
     # Don’t localize `picker_utc`, `input_timezone`, and `output_utc`
     conflicting_timezone_options: Ustawiono zarówno `picker_utc`, jak i nowsze opcje stref czasowych (`input_timezone` lub `output_utc`). Nowe opcje mają pierwszeństwo. Rozważ usunięcie `picker_utc` z konfiguracji.
+    # Don’t localize `preview_path`
+    preview_path_no_date_field: Opcja `preview_path` używa tagów daty i czasu, ale kolekcja nie ma pola DateTime, z którego można je odczytać, więc link do podglądu nie zostanie wyświetlony.
+    # {$name} is the field name from the configuration; Don’t localize `preview_path_date_field`
+    preview_path_date_field_not_found: Opcja `preview_path_date_field` odwołuje się do pola o nazwie `{$name}`, ale pole DateTime o tej nazwie nie jest zdefiniowane, więc link do podglądu nie zostanie wyświetlony.
+    # {$name} is the template tag from the configuration; Don’t localize `preview_path`
+    preview_path_field_not_found: Opcja `preview_path` odwołuje się do `{$name}`, ale takie pole nie jest zdefiniowane w kolekcji, więc link do podglądu nie zostanie wyświetlony.
+    # {$option} is an option path from the configuration, such as `filter.Regulation`
+    schema_unknown_option: Opcja `{$option}` nie jest zdefiniowana w schemacie konfiguracji Sveltia CMS. Zostanie zignorowana. Sprawdź, czy nie ma literówki lub błędu składni.
 
   # Compatibility link appended to unsupported feature messages
   compatibility_link: 'Szczegóły znajdziesz w informacjach o kompatybilności: {$link}'
@@ -1513,12 +1794,167 @@ local_workflow:
 # ==============================================================================
 # Editorial Workflow
 # ==============================================================================
-# Column headings for the Editorial Workflow feature (content review process).
+# Strings for the Editorial Workflow feature (content review process), where
+# unpublished entries are stored as pull requests on the Git backend.
 
+# Editorial Workflow board announcement with the number of entries in each column. {$draft},
+# {$review} and {$ready} are those numbers. The counts are labelled rather than written as prose,
+# because selecting a plural form on three numbers at once would need a variant per combination
+viewing_editorial_workflow: 'Przeglądasz teraz tablicę obiegu redakcyjnego. Szkice: {$draft}. W recenzji: {$review}. Gotowe: {$ready}. Oczekujące na usunięcie: {$deletion}.'
+# Same as above, for an Open Authoring contributor: their board has no Ready column, because only
+# a maintainer can publish
+viewing_open_authoring_workflow: 'Przeglądasz teraz tablicę obiegu redakcyjnego. Szkice: {$draft}. W recenzji: {$review}. Oczekujące na usunięcie: {$deletion}.'
+
+# Workflow status names. `drafts` is the plural form used as a column heading,
+# while `draft` is the singular form used in the editor’s status button.
 status:
+  draft: Szkic
   drafts: Szkice
   in_review: W recenzji
   ready: Gotowe
+  # A pending removal, which is a status of its own rather than a stage: it has no review to go
+  # through, only the deletion itself to carry out or call off
+  pending_deletion: Oczekuje na usunięcie
+
+workflow:
+  # Buttons on a pending deletion card, and their confirmation dialogs. The two actions are the
+  # reverse of a normal card’s: one calls the removal off, the other carries it out. The card’s own
+  # buttons are labelled “Cancel” and “Delete”; the dialog needs the longer form, because it already
+  # has a Cancel button of its own
+  cancel_deletion: Anuluj usunięcie
+  confirm_cancelling_deletion: Czy na pewno chcesz anulować to usunięcie? Wpis pozostanie opublikowany.
+  confirm_completing_deletion: Czy na pewno chcesz usunąć ten wpis? Zostanie usunięty natychmiast.
+  # Toast notification shown after an entry has been marked for deletion in the entry editor. The
+  # entry hasn’t been removed yet, so it doesn’t say “deleted”. The confirmation dialog has already
+  # explained that it stays until the deletion is published, so this doesn’t repeat it
+  deletion_pending: |
+    .input {$count :integer}
+    .match $count
+      one  {{ Wpis oznaczony do usunięcia. }}
+      few  {{ {$count} wpisy oznaczono do usunięcia. }}
+      many {{ {$count} wpisów oznaczono do usunięcia. }}
+      *    {{ {$count} wpisów oznaczono do usunięcia. }}
+  # Toast notification shown after the unpublished changes to an entry have been thrown away
+  changes_discarded: |
+    .input {$count :integer}
+    .match $count
+      one  {{ Zmiany odrzucone. }}
+      few  {{ Odrzucono zmiany w {$count} wpisach. }}
+      many {{ Odrzucono zmiany w {$count} wpisach. }}
+      *    {{ Odrzucono zmiany w {$count} wpisach. }}
+  # Toast notifications shown while a deletion is being called off, and once that has completed
+  cancelling_deletion: Anulowanie usunięcia…
+  deletion_cancelled: Usunięcie anulowane.
+  # Error notification when the deletion could not be cancelled
+  cancelling_deletion_failed: Nie udało się anulować usunięcia. Spróbuj ponownie.
+  # Group heading shown above the unpublished entries in the entry list
+  unpublished_entries: Nieopublikowane wpisy
+  published_entries: Opublikowane wpisy
+  # Editor toolbar: status button label, which drops the prefix on a small screen, and menu
+  # aria-label. `status` is one of the `status` strings above.
+  entry_status_value: 'Status: {$status}'
+  change_entry_status: Zmień status wpisu
+  # Editor toolbar: progress label while the status is being changed
+  changing_status: Zmienianie statusu…
+  # Workflow page: toast notification shown while the status is being updated after a card is
+  # dragged to another column, and once the update has completed
+  updating_status: Aktualizowanie statusu…
+  status_updated: Status zaktualizowany.
+  # Error notification when the status could not be changed
+  status_change_failed: Nie udało się zmienić statusu. Spróbuj ponownie.
+  # Error notification when the status can’t be changed because the entry is incomplete. Required
+  # fields can be left empty while the entry is a draft, but not once it moves on from there
+  status_change_blocked: Wpis zawiera błędy. Popraw je przed zmianą statusu.
+  # Error notification when an entry can’t be published because it’s incomplete, shown in the entry
+  # editor and on the Editorial Workflow page
+  publish_blocked: Wpis zawiera błędy. Popraw je przed opublikowaniem.
+  # Confirmation dialog shown after an entry has been saved as a draft, offering the next step.
+  # Used as both the dialog title and its OK button; the Cancel button reuses the `later` string
+  send_for_review: Wyślij do recenzji
+  confirm_sending_for_review: Twoje zmiany zostały zapisane jako szkic. Czy wysłać wpis do recenzji, aby ktoś mógł go przejrzeć i opublikować?
+  # Editor toolbar: button shown when the entry is ready to be published
+  publish_entry: Opublikuj wpis
+  # Editor toolbar button label and confirmation dialog title, used instead of “Delete” when the
+  # entry has a published version, because only the pending changes are thrown away
+  discard_changes: Odrzuć zmiany
+  # Confirmation message shown before deleting a published entry, replacing the direct
+  # `confirm_deleting_this_entry` when Editorial Workflow is enabled: the removal goes through
+  # review, so it isn’t immediate. Keep the label name in sync with `pending_deletion` below
+  confirm_deleting_published_entry: Czy na pewno chcesz usunąć ten wpis? Nie zostanie usunięty, dopóki usunięcie nie zostanie opublikowane. Do tego czasu nadal znajdziesz go na liście wpisów z oznaczeniem “Oczekuje na usunięcie”.
+  # Confirmation dialogs shown before deleting an unpublished entry. Deleting closes the pull
+  # request instead of committing a deletion to the configured branch. Keep the wording free of
+  # Git jargon, as editors are often non-technical.
+  # Used when the entry has never been published, so nothing of it is left afterwards
+  confirm_deleting_unpublished_entry: Ten wpis nie został jeszcze opublikowany, więc jego usunięcie spowoduje całkowite odrzucenie.
+  # Used when the entry updates one that is already live, which stays untouched. The dialog is
+  # titled “Discard Changes”, so the wording is about discarding, not deleting
+  confirm_discarding_entry_changes: Ten wpis ma nieopublikowane zmiany. Ich odrzucenie przywróci opublikowaną wersję. Sam wpis nie zostanie usunięty.
+  # Extra sentence appended to the entry list’s delete confirmation when every selected entry is
+  # unpublished. {$count} is the number of selected entries. Keep the wording free of Git jargon.
+  deleting_unpublished_note_all: |
+    .input {$count :integer}
+    .match $count
+      one {{ Nie został jeszcze opublikowany, więc Twoje nieopublikowane zmiany zostaną odrzucone. Opublikowana wersja pozostanie opublikowana. }}
+      *   {{ Nie zostały jeszcze opublikowane, więc Twoje nieopublikowane zmiany zostaną odrzucone. Opublikowane wersje pozostaną opublikowane. }}
+  # Same as above, but for a selection that mixes published and unpublished entries. {$count} is
+  # the number of selected entries that are unpublished.
+  deleting_unpublished_note_some: |
+    .input {$count :integer}
+    .match $count
+      one  {{ Jeden z nich nie został jeszcze opublikowany, więc Twoje nieopublikowane zmiany zostaną odrzucone. Opublikowana wersja pozostanie opublikowana. }}
+      few  {{ {$count} z nich nie zostały jeszcze opublikowane, więc Twoje nieopublikowane zmiany zostaną odrzucone. Opublikowane wersje pozostaną opublikowane. }}
+      many {{ {$count} z nich nie zostało jeszcze opublikowanych, więc Twoje nieopublikowane zmiany zostaną odrzucone. Opublikowane wersje pozostaną opublikowane. }}
+      *    {{ {$count} z nich nie zostało jeszcze opublikowanych, więc Twoje nieopublikowane zmiany zostaną odrzucone. Opublikowane wersje pozostaną opublikowane. }}
+  # Confirmation dialog shown before merging the pull request. Keep the wording free of Git jargon.
+  confirm_publishing_entry: Czy na pewno chcesz opublikować ten wpis? Twoje zmiany zaczną obowiązywać natychmiast.
+  # Workflow page: toast notifications shown while an entry is being published from a card, and
+  # once publishing has completed
+  publishing_entry: Publikowanie wpisu…
+  entry_published: Wpis opublikowany.
+  # Workflow page: toast notifications shown while an entry is being deleted from a card, and once
+  # the deletion has completed
+  deleting_entry: Usuwanie wpisu…
+  discarding_changes: Odrzucanie zmian…
+  entry_deleted: Wpis usunięty.
+  # Error notification when publishing fails
+  publishing_entry_failed: Nie udało się opublikować wpisu. Spróbuj ponownie.
+  # Workflow page: empty column message
+  no_entries: Brak wpisów.
+  # Workflow page: aria-label for a draggable entry card
+  drag_entry: Przeciągnij, aby zmienić status
+
+# Open Authoring: a contributor without write access to the configured repository works in a fork
+# of it, and their changes reach the site through a pull request a maintainer merges
+open_authoring:
+  # Confirmation dialog shown when the CMS needs to create a fork for the contributor, and the
+  # label on its OK button. {$repo} is the repository identifier in owner/repo format
+  fork_repository: Utwórz fork repozytorium
+  fork: Utwórz fork
+  confirm_forking_repository: Aby zaproponować zmiany w “{$repo}”, na Twoim koncie musi zostać utworzony fork repozytorium. Twoje zmiany są zapisywane w tym forku, a opiekun przegląda je przed publikacją.
+  # Error shown when the user declined the dialog above
+  fork_declined: Aby proponować zmiany, potrzebujesz forka repozytorium na swoim koncie.
+  # Error shown when the fork couldn’t be created. {$repo} is the repository identifier
+  fork_failed: Nie udało się utworzyć forka repozytorium “{$repo}” na Twoim koncie.
+  # Error shown when the CMS couldn’t work out whether the user can write to the repository, e.g.
+  # because the API rate limit is exhausted. {$repo} is the repository identifier
+  permission_check_failed: Nie udało się sprawdzić Twojego dostępu do repozytorium “{$repo}”. Spróbuj ponownie za chwilę.
+  # Error shown when the repository can’t be forked, which is the default for a private
+  # repository. {$repo} is the repository identifier
+  forking_disabled: Repozytorium “{$repo}” nie zezwala na forki. Poproś opiekuna o włączenie forkowania.
+  # Error shown when the user was invited to the repository but hasn’t accepted yet, so they still
+  # have no access. {$repo} is the repository identifier
+  invitation_pending: Masz oczekujące zaproszenie do repozytorium “{$repo}”. Zaakceptuj je w GitHub, a następnie zaloguj się ponownie.
+  # Error shown when the repository is private but the sign-in doesn’t cover private repositories.
+  # {$repo} is the repository identifier
+  private_repo_scope_required: Twoje logowanie nie obejmuje dostępu do prywatnych repozytoriów, więc nie można odczytać repozytorium “{$repo}”. Poproś opiekuna o sprawdzenie ustawień uwierzytelniania CMS.
+  # Error shown when a contributor tries to publish an entry, which only a maintainer can do
+  publish_unsupported: Tylko opiekun może publikować zmiany w tej witrynie. Zamiast tego oznacz swój wpis jako “W recenzji”, a ktoś się nim zajmie.
+  # Error shown when a change would go straight to the site instead of being reviewed, which a
+  # contributor can’t do. It covers media library uploads and deletions, and entry reordering
+  direct_commit_unsupported: Tej zmiany nie można wprowadzić bezpośrednio. Do recenzji można proponować tylko edycje wpisów.
+  # Infobar shown while a contributor is signed in. {$repo} is their fork in owner/repo format
+  contributing_via_fork: Twoje zmiany są zapisywane w Twoim forku tego repozytorium “{$repo}” i przeglądane przed publikacją.
+  view_fork: Zobacz fork
 
 # ==============================================================================
 # Settings Dialog
@@ -1585,7 +2021,7 @@ prefs:
         description: Zarządzaj kluczami API dla <a>usług tłumaczeniowych</a>.
       # API key input label, e.g., ”DeepL Key”
       # {$service} is the translation service name
-      field_label: 'Klucz {$service}'
+      field_label: Klucz {$service}
       # Description with embedded links
       # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
       description: Zarejestruj się w <a {$homeHref}>{$service}</a> i wprowadź <a {$apiKeyHref}>swój klucz API</a> tutaj, aby umożliwić szybkie tłumaczenie pól tekstowych wpisów.
@@ -1599,7 +2035,7 @@ prefs:
         description: Zarządzaj kluczami API dla <a>usług zdjęć stockowych</a>.
       # API key input label, e.g., ”Unsplash API Key”
       # {$service} is the stock photo service name
-      field_label: 'Klucz API {$service}'
+      field_label: Klucz API {$service}
       # Description with embedded links
       # {$service} is the service name; {$homeHref} and {$apiKeyHref} are HTML anchor attributes for the service homepage and API key page
       description: Zarejestruj się w <a {$homeHref}>{$service} API</a> i wprowadź <a {$apiKeyHref}>swój klucz API</a> tutaj, aby wstawiać darmowe zdjęcia stockowe do pól obrazów we wpisach.
@@ -1613,7 +2049,7 @@ prefs:
         description: Zarządzaj kluczami API dla <a>usług przechowywania w chmurze</a>.
       # API key input label
       # {$service} is the cloud storage service name
-      field_label: 'Klucz API {$service}'
+      field_label: Klucz API {$service}
       no_services: Nie skonfigurowano żadnych <a>usług przechowywania w chmurze</a>.
 
   # Accessibility panel
@@ -1648,6 +2084,18 @@ prefs:
         field_label: Nagłówek autoryzacji (np. Bearer <token>) (opcjonalnie)
         saved: Nagłówek autoryzacji zapisany.
         removed: Nagłówek autoryzacji usunięty.
+    clear_data:
+      title: Wyczyść dane
+      # Clear File Cache button
+      file_cache:
+        description: Usuń zapisaną lokalnie w pamięci podręcznej zawartość plików i miniatury obrazów, aby zwolnić miejsce lub rozwiązać problemy spowodowane nieaktualnymi danymi.
+        button_label: Wyczyść pamięć podręczną plików
+        confirmation: Zapisana lokalnie w pamięci podręcznej zawartość plików i miniatury obrazów zostaną usunięte. Twoje niezapisane szkice i ustawienia zostaną zachowane, a usunięte dane zostaną w razie potrzeby ponownie pobrane lub wygenerowane. Po zakończeniu CMS zostanie przeładowany.
+      # Erase All Data button
+      all_data:
+        description: Usuń wszystko, co CMS przechowuje w tej przeglądarce, w tym pliki w pamięci podręcznej, niezapisane szkice i ustawienia. Nie wpłynie to na nic, co zostało już zapisane w repozytorium.
+        button_label: Wymaż wszystkie dane
+        confirmation: Wszystkie dane przechowywane w tej przeglądarce zostaną usunięte, w tym zawartość plików w pamięci podręcznej, miniatury obrazów, niezapisane szkice, ustawienia i stan logowania. Nie wpłynie to na repozytorium, ale wszystkie niezapisane zmiany zostaną utracone i konieczne będzie ponowne zalogowanie. Po zakończeniu CMS zostanie przeładowany.
 
 # ==============================================================================
 # Keyboard Shortcuts

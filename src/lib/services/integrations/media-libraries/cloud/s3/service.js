@@ -1,4 +1,8 @@
 import { cmsConfig } from '$lib/services/config/state';
+import {
+  findLibraryOptions,
+  resolveLibraryOptions,
+} from '$lib/services/integrations/media-libraries/options';
 
 import {
   deleteS3Objects,
@@ -35,7 +39,8 @@ import {
  * `account_id`. Default: `region`.
  * @property {(libOptions: S3MediaLibrary) => S3Config} [resolveConfig] Function to derive the S3
  * configuration from the library options, typically to add the service’s fixed API endpoint and
- * default public URL. Default: the library options are used as is.
+ * default public URL, or to fill in a default `access_key_id`. The result is also used to decide
+ * whether the service is enabled. Default: the library options are used as is.
  */
 
 /**
@@ -86,13 +91,8 @@ export class S3CompatibleService {
    * disabled.
    */
   getLibraryOptions(config = cmsConfig.current) {
-    const { serviceId } = this;
-
-    return (
-      /** @type {S3MediaLibrary | false | undefined} */ (config?.media_libraries?.[serviceId]) ??
-      (config?.media_library?.name === serviceId
-        ? /** @type {S3MediaLibrary} */ (config?.media_library)
-        : undefined)
+    return /** @type {S3MediaLibrary | false | undefined} */ (
+      findLibraryOptions(this.serviceId, config)
     );
   }
 
@@ -103,7 +103,9 @@ export class S3CompatibleService {
    * @throws {Error} If the service is not configured.
    */
   getConfig({ fieldConfig }) {
-    const libOptions = this.getLibraryOptions(fieldConfig) ?? this.getLibraryOptions();
+    const libOptions = /** @type {S3MediaLibrary | false | undefined} */ (
+      resolveLibraryOptions(this.serviceId, fieldConfig)
+    );
 
     if (!libOptions) {
       throw new Error(`${this.serviceLabel} configuration is not available`);
@@ -121,9 +123,17 @@ export class S3CompatibleService {
    * @returns {boolean} True if enabled, false otherwise.
    */
   isEnabled = (fieldConfig) => {
-    const options = this.getLibraryOptions(fieldConfig) ?? this.getLibraryOptions();
+    const options = /** @type {S3MediaLibrary | false | undefined} */ (
+      resolveLibraryOptions(this.serviceId, fieldConfig)
+    );
 
-    return !!(options && options.access_key_id && options.bucket && options[this.requiredOption]);
+    if (!options) {
+      return false;
+    }
+
+    const config = this.resolveConfig(options);
+
+    return !!(config.access_key_id && config.bucket && config[this.requiredOption]);
   };
 
   /**

@@ -11,7 +11,6 @@
   import { selectedCollection } from '$lib/services/contents/collection';
   import { selectedEntries } from '$lib/services/contents/collection/entries';
   import {
-    currentView,
     entryGroups,
     listedEntries,
     listedUnpublishedEntries,
@@ -19,6 +18,7 @@
   } from '$lib/services/contents/collection/view';
   import { viewFilters } from '$lib/services/contents/collection/view/filter';
   import { viewGroups } from '$lib/services/contents/collection/view/group';
+  import { currentView } from '$lib/services/contents/collection/view/settings';
   import { sortKeys } from '$lib/services/contents/collection/view/sort-keys';
   import { env } from '$lib/services/user/env.svelte';
   import { openAuthoring } from '$lib/services/workflow/open-authoring';
@@ -33,7 +33,9 @@
       : undefined,
   );
   const collectionName = $derived(entryCollection?.name);
+  /* v8 ignore start -- only read for an entry collection */
   const thumbnailFieldNames = $derived(entryCollection?._thumbnailFieldNames ?? []);
+  /* v8 ignore stop */
   // The unpublished entries are listed in their own group above the published ones, so they count
   // towards the list total as well
   const listedEntryCount = $derived(
@@ -44,7 +46,7 @@
 </script>
 
 {#if entryCollection && !reordering.current}
-  <Toolbar variant="secondary" aria-label={_('entry_list')}>
+  <Toolbar variant="secondary" ariaLabel={_('entry_list')}>
     {#if !(env.isSmallScreen || env.isMediumScreen) && !openAuthoring.current}
       <ItemSelector
         allItems={[

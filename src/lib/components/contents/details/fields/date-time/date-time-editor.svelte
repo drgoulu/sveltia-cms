@@ -8,7 +8,6 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { Button } from '@sveltia/ui';
-  import { untrack } from 'svelte';
 
   import { parseDateTimeConfig } from '$lib/services/contents/fields/date-time/config';
   import {
@@ -16,11 +15,13 @@
     getCurrentValue,
     getDate,
     getInputValue,
+    shouldUpdateValue,
   } from '$lib/services/contents/fields/date-time/helpers';
   import {
     getInitialTimeZone,
     getTimeZoneLabel,
   } from '$lib/services/contents/fields/date-time/timezone';
+  import { watch } from '$lib/services/utils/state.svelte';
 
   /**
    * @import { FieldEditorProps } from '$lib/types/private';
@@ -74,53 +75,29 @@
    * Update {@link currentValue} based on {@link inputValue}.
    */
   const setCurrentValue = () => {
-    const _currentValue = getCurrentValue({ inputValue, currentValue, fieldConfig, timeZone });
+    const newValue = getCurrentValue({ inputValue, currentValue, fieldConfig, timeZone });
 
     // Avoid a cycle dependency & infinite loop
-    if (_currentValue === undefined || _currentValue === currentValue) {
-      return;
+    if (shouldUpdateValue({ newValue, currentValue, fieldConfig })) {
+      currentValue = /** @type {string} */ (newValue);
     }
-
-    const newDate = getDate(_currentValue, fieldConfig);
-    const oldDate = getDate(currentValue, fieldConfig);
-
-    if (newDate !== undefined && oldDate !== undefined) {
-      // Compare the actual date/time: if a user edits an existing entry in a different location
-      // than where it was originally written, `inputValue` and `_currentValue` may shift to the
-      // current timezone, but the epoch won’t change. Don’t update `currentValue` in that case.
-      // The dates are compared here rather than as epochs because `getDate()` returns `undefined`
-      // for a value it can’t parse, and `NaN !== NaN` would report every such value as a change.
-      if (newDate.getTime() === oldDate.getTime()) {
-        return;
-      }
-    } else if (newDate === undefined && oldDate === undefined && _currentValue !== '') {
-      // Neither value resolves to a date, so there’s no epoch to compare and nothing to tell the
-      // two apart. Writing one unusable string over another would let this and the effect that
-      // syncs `inputValue` keep waking each other. Clearing the field is the exception: an empty
-      // `_currentValue` settles on the next run.
-      return;
-    }
-
-    currentValue = _currentValue;
   };
 
-  $effect(() => {
-    // Keep the displayed value in sync with the stored entry value.
-    void [currentValue];
-
-    untrack(() => {
+  // Keep the displayed value in sync with the stored entry value.
+  watch(
+    () => currentValue,
+    () => {
       setInputValue();
-    });
-  });
+    },
+  );
 
-  $effect(() => {
-    // Only update currentValue when inputValue changes (not when timezone changes)
-    void [inputValue];
-
-    untrack(() => {
+  // Only update currentValue when inputValue changes (not when timezone changes)
+  watch(
+    () => inputValue,
+    () => {
       setCurrentValue();
-    });
-  });
+    },
+  );
 
   /**
    * Handle input focus event.

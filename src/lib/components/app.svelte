@@ -40,20 +40,9 @@
     /* eslint-enable prefer-const */
   } = $props();
 
-  /**
-   * State to track whether the app locale has been initialized. The strings for the default locale
-   * are always bundled with the app, so the UI can be rendered right away, even while the strings
-   * for another locale are being fetched from the CDN.
-   */
-  let localeLoaded = $state(false);
-  const hasExistingConfigLink = typeof document !== 'undefined' && !!document.querySelector('link[rel="cms-config-url"]');
-
-  $effect.pre(() => {
-    if (!localeLoaded) {
-      initAppLocale();
-      localeLoaded = true;
-    }
-  });
+  // The strings for the default locale are always bundled with the app, so the UI can be rendered
+  // right away, even while the strings for another locale are being fetched from the CDN
+  initAppLocale();
 
   $effect.pre(() => {
     initUserEnvDetection();
@@ -136,27 +125,25 @@
 />
 
 <AppShell>
-  {#if localeLoaded}
-    <div role="none" class="outer">
-      <LocaleLoadErrorToast />
-      <UpdateNotification />
-      <ForkPermissionDialog />
-      {#if backend.current}
-        <BackendStatusIndicator />
+  <div role="none" class="outer">
+    <LocaleLoadErrorToast />
+    <UpdateNotification />
+    <ForkPermissionDialog />
+    {#if backend.current}
+      <BackendStatusIndicator />
+    {/if}
+    {#if user.account && dataLoaded.current}
+      <OpenAuthoringIndicator />
+    {/if}
+    <div role="none" class="main">
+      {#if user.account && dataLoaded.current && transitioned}
+        <MainRouter />
+      {:else}
+        <EntrancePage />
       {/if}
-      {#if user.account && dataLoaded.current}
-        <OpenAuthoringIndicator />
-      {/if}
-      <div role="none" class="main">
-        {#if user.account && dataLoaded.current && transitioned}
-          <MainRouter />
-        {:else}
-          <EntrancePage />
-        {/if}
-      </div>
     </div>
-    <div role="status">{announcedPageStatus.current}</div>
-  {/if}
+  </div>
+  <div role="status">{announcedPageStatus.current}</div>
 </AppShell>
 
 <style>

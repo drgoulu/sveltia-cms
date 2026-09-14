@@ -56,12 +56,11 @@
   import { env } from '$lib/services/user/env.svelte';
   import { prefs } from '$lib/services/user/prefs.svelte';
   import {
+    getUnpublishedEntryBySlug,
     hasPublishedVersion,
     isPendingDeletion,
-    unpublishedEntries,
     workflowEnabled,
   } from '$lib/services/workflow';
-  import { isEntryBranch } from '$lib/services/workflow/branch';
   import { openAuthoring } from '$lib/services/workflow/open-authoring';
   import {
     deleteWorkflowEntry,
@@ -106,6 +105,8 @@
   let errorMessage = $state('');
   let saving = $state(false);
   let deleting = $state(false);
+  /** Whether the entry is being duplicated, which takes a moment when it has assets to copy. */
+  let duplicating = $state(false);
   /** I18n key of the message shown while a deletion is in flight. */
   let progressMessage = $state('');
   /** @type {MenuButton | undefined} */
@@ -113,7 +114,7 @@
 
   const notFound = $derived(entryDraft.current === undefined);
   const isNew = $derived(entryDraft.current?.isNew ?? true);
-  const isIndexFile = $derived(entryDraft.current?.isIndexFile ?? false);
+  const isIndexFile = $derived(!!entryDraft.current?.isIndexFile);
   const collection = $derived(entryDraft.current?.collection);
   const entryCollection = $derived(collection?._type === 'entry' ? collection : undefined);
   /**
@@ -131,10 +132,12 @@
   );
   const collectionName = $derived(collection?.name);
   const fileName = $derived(collectionFile?.name);
+  /* v8 ignore start -- only read for an existing entry, which has a collection */
+  // `appLocale.current` is a key, because `getCollectionLabel` can return a localized label
   const collectionLabel = $derived(
-    // `appLocale.current` is a key, because `getCollectionLabel` can return a localized label
     appLocale.current && collection ? getCollectionLabel(collection) : '',
   );
+  /* v8 ignore stop */
   const collectionLabelSingular = $derived(
     // `appLocale.current` is a key, because `getCollectionLabel` can return a localized label
     appLocale.current && collection ? getCollectionLabel(collection, { useSingular: true }) : '',
@@ -144,9 +147,14 @@
   // There’s only something to put in the second pane when another locale can be edited alongside
   // the first one, or when the entry has a preview
   const canShowSecondPane = $derived((i18nEnabled && allLocales.length > 1) || canPreview);
-  // Saving or deleting takes a moment and navigates away when it’s done, so the whole control group
-  // is locked meanwhile rather than just the button that started it
-  const busy = $derived(saving || deleting);
+  /* v8 ignore start -- only read while the draft is there, as the preview is on by default */
+  const hasSingleLocale = $derived(
+    Object.keys(entryDraft.current?.currentValues ?? {}).length === 1,
+  );
+  /* v8 ignore stop */
+  // Saving, deleting or duplicating takes a moment and navigates away when it’s done, so the whole
+  // control group is locked meanwhile rather than just the button that started it
+  const busy = $derived(saving || deleting || duplicating);
   const controlsDisabled = $derived(disabled || busy);
   const modified = $derived(isNew || entryDraft.modified);
   const associatedAssets = $derived(
@@ -158,13 +166,7 @@
   // stays in sync when the status is changed elsewhere, e.g. on the Editorial Workflow page
   const unpublishedEntry = $derived(
     workflowEnabled.current && collectionName && originalEntry
-      ? unpublishedEntries.current.find(({ workflow }) =>
-          isEntryBranch({
-            branch: workflow.pullRequest.branch,
-            collectionName,
-            slug: fileName ?? originalEntry.slug,
-          }),
-        )
+      ? getUnpublishedEntryBySlug({ collectionName, slug: fileName ?? originalEntry.slug })
       : undefined,
   );
   // The `delete` option only blocks taking an entry off the site. Discarding a pull request leaves
@@ -265,6 +267,7 @@
         return { deleted: true, deletionPending: true };
       }
 
+      /* v8 ignore next 4 -- the option is only offered for an existing entry */
       if (originalEntry) {
         // `deleteEntries()` reports the outcome itself
         await deleteEntries([originalEntry], associatedAssets);
@@ -281,6 +284,7 @@
   const discardChanges = async () => {
     await runDeletion(
       async () => {
+        /* v8 ignore next 3 -- the option is only offered for an unpublished entry */
         if (unpublishedEntry) {
           await discardWorkflowEntry(unpublishedEntry);
         }
@@ -291,11 +295,6 @@
     );
   };
 
-  /**
-   * Save the entry draft.
-   * @param {object} [options] Options.
-   * @param {boolean} [options.skipCI] Whether to disable automatic deployments for the change.
-   */
   /**
    * Check whether the entry that has just been saved is complete enough to be handed over for
    * review. Required fields aren’t enforced while an entry is a draft, so it may have been saved
@@ -327,11 +326,11 @@
   const save = async ({ skipCI = undefined } = {}) => {
     const draft = entryDraft.current;
 
-    saving = true;
-
     if (!collection || !draft) {
       return;
     }
+
+    saving = true;
 
     try {
       const savedEntry = await saveEntry({ draft, skipCI });
@@ -395,7 +394,7 @@
         showValidationToast = true;
       } else if (ex.message === 'saving_failed') {
         showErrorDialog = true;
-        errorMessage = ex.cause?.message ?? ex.message ?? _('unexpected_error');
+        errorMessage = ex.cause?.message ?? ex.message;
       } else {
         showErrorDialog = true;
         errorMessage = '';
@@ -422,7 +421,7 @@
   {/if}
 {/snippet}
 
-<Toolbar variant="primary" aria-label={_('primary')}>
+<Toolbar variant="primary" ariaLabel={_('primary')}>
   <BackButton
     aria-label={_('cancel_editing')}
     useShortcut={prefs.closeWithEscape && !activeInlineEditors.current}
@@ -444,11 +443,7 @@
               : collection && originalEntry && appLocale.current
                 ? getEntrySummary(collection, originalEntry)
                 : ''}
-            {#if env.isSmallScreen}
-              {entrySummary}
-            {:else}
-              <bdi>{collectionLabel}</bdi> › <bdi>{entrySummary}</bdi>
-            {/if}
+            <bdi>{collectionLabel}</bdi> › <bdi>{entrySummary}</bdi>
           {/if}
         </TruncatedText>
       {/if}
@@ -509,7 +504,7 @@
     bind:this={menuButton}
   >
     {#snippet popup()}
-      <Menu aria-label={_('editor_options')}>
+      <Menu ariaLabel={_('editor_options')}>
         {#if env.isSmallScreen}
           {@render overflowButtons()}
         {/if}
@@ -518,24 +513,29 @@
             !collectionFile &&
             !isIndexFile &&
             entryCollection?.duplicate !== false &&
-            !collectionState.current.creationDisabled &&
-            // @todo Enable duplication for Hugo’s page bundles = the `path` option. We need to
-            // duplicate assets along with the entry.
-            // @see https://github.com/sveltia/sveltia-cms/issues/526
-            !entryCollection?.path}
+            !collectionState.current.creationDisabled}
           {#if canDuplicate}
             <MenuItem
               variant="ghost"
               disabled={controlsDisabled}
               label={_('duplicate')}
               aria-label={_('duplicate_entry')}
-              onclick={() => {
-                goto(`/collections/${collectionName}/new`, {
-                  replaceState: true,
-                  notifyChange: false,
-                  transitionType: 'forwards',
-                });
-                duplicateDraft(entryDraft);
+              onclick={async () => {
+                duplicating = true;
+
+                // The original’s own assets are copied along with the entry, so this can take a
+                // moment. The URL is updated only once the duplicate is in place
+                const duplicated = !!(await duplicateDraft(entryDraft));
+
+                duplicating = false;
+
+                if (duplicated) {
+                  goto(`/collections/${collectionName}/new`, {
+                    replaceState: true,
+                    notifyChange: false,
+                    transitionType: 'forwards',
+                  });
+                }
               }}
             />
           {/if}
@@ -591,6 +591,7 @@
           label={_('revert_all_changes')}
           disabled={!modified || pendingDeletion}
           onclick={() => {
+            /* v8 ignore next 3 -- the menu is only offered while the draft is there */
             if (entryDraft.current) {
               revertChanges({ draft: entryDraft.current });
             }
@@ -633,8 +634,7 @@
           <MenuItemCheckbox
             label={_('sync_scrolling')}
             checked={entryEditorSettings.current?.syncScrolling}
-            disabled={!showSecondPane ||
-              (!canPreview && Object.keys(entryDraft.current?.currentValues ?? {}).length === 1)}
+            disabled={!showSecondPane || (!canPreview && hasSingleLocale)}
             onChange={() => {
               entryEditorSettings.current = {
                 ...entryEditorSettings.current,
@@ -731,7 +731,7 @@
 <!-- Shown while the request is in flight. The result is reported by the content library page,
 because this toast goes away with the editor once the deletion has completed -->
 {#if progressMessage}
-  <Toast id={progressMessage} bind:show={deleting} duration={0}>
+  <Toast id={progressMessage} show={deleting} duration={0}>
     <Alert status="info">{_(progressMessage)}</Alert>
   </Toast>
 {/if}

@@ -21,7 +21,7 @@
   import { sleep } from '@sveltia/utils/misc';
   import { isObject } from '@sveltia/utils/object';
   import { unflatten } from 'flat';
-  import { getContext, onMount, untrack } from 'svelte';
+  import { getContext, onMount } from 'svelte';
   import { flip } from 'svelte/animate';
 
   import Image from '$lib/components/assets/shared/image.svelte';
@@ -43,24 +43,19 @@
   import { getField } from '$lib/services/contents/entry/fields';
   import { getSubtree } from '$lib/services/contents/entry/subtree';
   import { formatSummary, getListFieldInfo } from '$lib/services/contents/fields/list/helpers';
-  import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
   import { env } from '$lib/services/user/env.svelte';
-  import {
-    getDropIndex,
-    getListItemAt,
-    getMoveTarget,
-    moveListItem,
-    startAutoScroll,
-    stopAutoScroll,
-  } from '$lib/services/utils/drag-sorting';
+  import { createDragSorter } from '$lib/services/utils/drag-sorting.svelte';
+  import { watch } from '$lib/services/utils/state.svelte';
 
   /**
    * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
    * @import {
    * ComplexListField,
+   * FieldKeyPath,
    * ListFieldWithSubField,
    * ListFieldWithSubFields,
    * ListFieldWithTypes,
+   * VariableFieldType,
    * } from '$lib/types/public';
    */
 
@@ -110,12 +105,35 @@
   const { fields } = $derived(/** @type {ListFieldWithSubFields} */ (fieldConfig));
   const { types, typeKey = 'type' } = $derived(/** @type {ListFieldWithTypes} */ (fieldConfig));
   const { hasSingleSubField, hasVariableTypes } = $derived(getListFieldInfo(fieldConfig));
-  const isIndexFile = $derived(entryDraft.current?.isIndexFile ?? false);
-  const collection = $derived(entryDraft.current?.collection);
+  /* v8 ignore start -- a list has either types, subfields or a single subfield */
+  /** The types of a list with variable types. */
+  const variableTypes = $derived(types ?? []);
+  /** The subfields of an item in a list without variable types. */
+  const singleSubFields = $derived(fields ?? (field ? [field] : []));
+  /* v8 ignore stop */
+
+  /**
+   * Get the configuration of the given type.
+   * @param {string} type Type name.
+   * @returns {VariableFieldType | undefined} Type configuration.
+   */
+  const getTypeConfig = (type) => variableTypes.find(({ name }) => name === type);
+
+  /* v8 ignore start -- the states are set up along with the items */
+  /**
+   * Check whether the item at the given key path is expanded, which it is until it’s collapsed.
+   * @param {FieldKeyPath} itemKeyPath Key path of the item.
+   * @returns {boolean} Result.
+   */
+  const isItemExpanded = (itemKeyPath) =>
+    entryDraft.current?.expanderStates?._[itemKeyPath] ?? true;
+  /* v8 ignore stop */
+  /* v8 ignore start -- the editor is only rendered while the draft is there */
+  const isIndexFile = $derived(!!entryDraft.current?.isIndexFile);
   const collectionName = $derived(entryDraft.current?.collectionName ?? '');
-  const collectionFile = $derived(entryDraft.current?.collectionFile);
+  /* v8 ignore stop */
   const fileName = $derived(entryDraft.current?.fileName);
-  const { defaultLocale } = $derived((collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG);
+  const defaultLocale = $derived(entryDraft.current?.defaultLocale);
   const isDuplicateField = $derived(locale !== defaultLocale && i18n === 'duplicate');
   const valueMap = $derived(getValueMapSnapshot(entryDraft.current, locale, valueStoreKey));
   const parentExpandedKeyPath = $derived(`${keyPath}#`);
@@ -132,12 +150,15 @@
     }),
   );
   const hasMaxItems = $derived(items.length >= max);
+  /** The subfields of every item, regardless of its type. */
+  const allSubFields = $derived(
+    hasVariableTypes
+      ? variableTypes.flatMap(({ fields: typeFields = [] }) => typeFields)
+      : singleSubFields,
+  );
   const hasEditableSubFields = $derived(
     locale === defaultLocale ||
-      (hasVariableTypes
-        ? (types?.flatMap(({ fields: typeFields = [] }) => typeFields) ?? [])
-        : (fields ?? (field ? [field] : []))
-      ).some(({ i18n: subI18n = false }) => subI18n === true || subI18n === 'translate'),
+      allSubFields.some(({ i18n: subI18n = false }) => subI18n === true || subI18n === 'translate'),
   );
   const isAddDisabled = $derived(isDuplicateField || !hasEditableSubFields);
 
@@ -150,42 +171,20 @@
    * @type {HTMLElement | undefined}
    */
   let itemList = $state();
-  /**
-   * Index of the item made draggable by a press on its drag handle. Only the handle starts a drag,
-   * so the rest of the item stays selectable and its own controls keep working.
-   * @type {number | undefined}
-   */
-  let grabbedIndex = $state();
-  /**
-   * Index of the item currently being dragged.
-   * @type {number | undefined}
-   */
-  let dragIndex = $state();
-  /**
-   * Item indexes in the order they are displayed. While an item is being dragged, this holds the
-   * provisional order, so the other items slide out of the way and the gap the dragged item would
-   * land in follows the pointer. `undefined` while no drag is in progress.
-   * @type {number[] | undefined}
-   */
-  let previewOrder = $state();
-
-  /**
-   * The order the items are rendered in. This is the identity order except during a drag. A stale
-   * preview left over from a list that changed length underneath is discarded.
-   * @type {number[]}
-   */
-  const displayOrder = $derived(
-    previewOrder?.length === items.length ? previewOrder : items.map((_item, index) => index),
-  );
 
   /**
    * Update the expander states of the list and its items.
    * @param {Record<string, boolean>} stateMap Map of key path and state.
    */
   const updateExpanderStates = (stateMap) => {
-    if (entryDraft.current) {
-      syncExpanderStates({ draft: entryDraft.current, stateMap });
+    // The controls are disabled once the draft is gone, so this is only a race with the editor
+    // closing
+    /* v8 ignore next 3 */
+    if (!entryDraft.current) {
+      return;
     }
+
+    syncExpanderStates({ draft: entryDraft.current, stateMap });
   };
 
   /**
@@ -194,6 +193,8 @@
   const initializeExpanderState = () => {
     const draft = entryDraft.current;
 
+    // The editor is mounted with a draft; this is only a race with the editor closing
+    /* v8 ignore next 3 */
     if (!draft) {
       return;
     }
@@ -218,6 +219,8 @@
   const updateComplexList = (manipulate) => {
     const draft = entryDraft.current;
 
+    // The items are gone along with the draft, so this is only a race with the editor closing
+    /* v8 ignore next 3 */
     if (!draft) {
       return;
     }
@@ -259,17 +262,27 @@
    * will be `undefined`.
    */
   const addItem = async ({ index = addToTop ? 0 : items.length, dupIndex, type } = {}) => {
+    const draft = entryDraft.current;
+
+    // The controls are disabled once the draft is gone, so this is only a race with the editor
+    // closing
+    /* v8 ignore next 3 */
+    if (!draft) {
+      return;
+    }
+
     updateComplexList(({ valueList, expanderStateList }) => {
-      const subFields = type
-        ? (types?.find(({ name }) => name === type)?.fields ?? [])
-        : (fields ?? (field ? [field] : []));
+      /* v8 ignore next -- a type is only added from the menu listing the known ones */
+      const subFields = type ? (getTypeConfig(type)?.fields ?? []) : singleSubFields;
 
       const newItem = (() => {
         if (typeof dupIndex === 'number') {
           return structuredClone(valueList[dupIndex]);
         }
 
-        const item = unflatten(getDefaultValues({ fields: subFields, locale, defaultLocale }));
+        const item = unflatten(
+          getDefaultValues({ fields: subFields, locale, defaultLocale: draft.defaultLocale }),
+        );
 
         return hasSingleSubField && field ? item[field.name] : item;
       })();
@@ -285,6 +298,7 @@
 
         // Track original key paths for existing items before they shift due to the insertion
         valueList.forEach((item, i) => {
+          /* v8 ignore next 3 -- every item of a list with subfields is an object */
           if (isObject(item)) {
             item.__sc_item_original_key_path ??= `${keyPath}.${i}`;
           }
@@ -318,6 +332,7 @@
       if (!hasSingleSubField) {
         // Track original key paths for existing items before they shift due to the removal
         valueList.forEach((item, i) => {
+          /* v8 ignore next 3 -- every item of a list with subfields is an object */
           if (isObject(item)) {
             item.__sc_item_original_key_path ??= `${keyPath}.${i}`;
           }
@@ -343,6 +358,7 @@
     updateComplexList(({ valueList, expanderStateList }) => {
       if (!hasSingleSubField) {
         valueList.forEach((item, index) => {
+          /* v8 ignore next 7 -- every item of a list with subfields is an object */
           if (isObject(item)) {
             // Ensure the IDs are unique before reordering, so that the `each` block below keeps
             // following each item rather than its position
@@ -366,77 +382,19 @@
     )?.focus();
   };
 
-  /**
-   * Handle a `dragover` event fired while an item is being reordered.
-   *
-   * The list-level drag handlers run in the capture phase, so that a drop zone or another sortable
-   * list nested in an item — a File subfield, say — never sees a reorder drag and doesn’t light up
-   * as a drop target. Anything else being dragged, such as a file from the desktop, is passed
-   * through untouched.
-   * @param {DragEvent} event `dragover` event.
-   */
-  const onDragOver = (event) => {
-    if (dragIndex === undefined || !previewOrder) {
-      return;
-    }
-
-    event.stopPropagation();
-    // The browser rejects the drop and never fires the `drop` event unless the default is prevented
-    event.preventDefault();
-
-    if (event.dataTransfer) {
-      event.dataTransfer.dropEffect = 'move';
-    }
-
-    const item = getListItemAt({ target: event.target, listElement: itemList });
-
-    // Keep the current order while the pointer is over a gap between two items
-    if (!item) {
-      return;
-    }
-
-    const from = previewOrder.indexOf(dragIndex);
-
-    const to = getMoveTarget({
-      dragIndex: from,
-      dropIndex: getDropIndex({
-        index: item.index,
-        clientY: event.clientY,
-        rect: item.element.getBoundingClientRect(),
-      }),
-    });
-
-    if (to !== undefined) {
-      previewOrder = moveListItem(previewOrder, from, to);
-    }
-  };
-
-  /**
-   * Handle a `drop` event fired while an item is being reordered.
-   * @param {DragEvent} event `drop` event.
-   */
-  const onDrop = (event) => {
-    if (dragIndex === undefined) {
-      return;
-    }
-
-    event.stopPropagation();
-    event.preventDefault();
-    stopAutoScroll();
-
-    const from = dragIndex;
-    // Where the item ended up in the preview is where it should be committed
-    const to = previewOrder?.indexOf(dragIndex) ?? from;
-
-    grabbedIndex = undefined;
-    dragIndex = undefined;
-    // The committed order matches the preview, so the items don’t move again on the way out
-    previewOrder = undefined;
-
-    if (to !== from) {
-      moveItem(from, to);
-    }
-  };
+  const sorter = createDragSorter({
+    /**
+     * Get the number of items in the list.
+     * @returns {number} Item count.
+     */
+    getItemCount: () => items.length,
+    /**
+     * Get the list element.
+     * @returns {HTMLElement | undefined} Element.
+     */
+    getListElement: () => itemList,
+    onMove: moveItem,
+  });
 
   /**
    * Format the summary template.
@@ -463,6 +421,8 @@
    * @returns {Promise<string | undefined>} Thumbnail image URL.
    */
   const getThumbnail = async (index) => {
+    // Only called by `updateThumbnails()`, which has already checked the option
+    /* v8 ignore next 3 */
     if (!thumbnailFieldName) {
       return undefined;
     }
@@ -554,13 +514,12 @@
     });
   };
 
-  $effect(() => {
-    void [items];
-
-    untrack(() => {
+  watch(
+    () => items,
+    () => {
       updateThumbnails();
-    });
-  });
+    },
+  );
 
   onMount(() => {
     initializeExpanderState();
@@ -573,7 +532,7 @@
     <MenuItem label={_(`add_item_${position}`)} disabled={hasMaxItems}>
       <!-- eslint-disable-next-line no-shadow -->
       {#snippet items()}
-        {#each types ?? [] as { name, label: itemLabel } (name)}
+        {#each variableTypes as { name, label: itemLabel } (name)}
           <MenuItem
             label={itemLabel || name}
             onclick={() => addItem({ index: insertIndex, type: name })}
@@ -643,10 +602,10 @@
   class="item-list"
   class:collapsed={!parentExpanded}
   bind:this={itemList}
-  ondragovercapture={onDragOver}
-  ondropcapture={onDrop}
+  ondragovercapture={sorter.onDragOver}
+  ondropcapture={sorter.onDrop}
 >
-  {#each displayOrder as index (getItemKey(index))}
+  {#each sorter.displayOrder as index (getItemKey(index))}
     {@const item = items[index]}
     <!--
       The wrapper is what the `flip` animation moves: `animate:` only works on an element at the top
@@ -656,47 +615,27 @@
       <VisibilityObserver>
         {@const itemKeyPath = `${keyPath}.${index}`}
         {@const type = hasVariableTypes ? item[typeKey] : undefined}
-        {@const typeConfig = type ? types?.find(({ name }) => name === type) : undefined}
+        {@const typeConfig = type ? getTypeConfig(type) : undefined}
         {@const unknownType = hasVariableTypes && !typeConfig}
-        {@const expanded = entryDraft.current?.expanderStates?._[itemKeyPath] ?? true}
-        {@const subFields = hasVariableTypes
-          ? (typeConfig?.fields ?? [])
-          : (fields ?? (field ? [field] : []))}
+        {@const expanded = isItemExpanded(itemKeyPath)}
+        {@const subFields = hasVariableTypes ? (typeConfig?.fields ?? []) : singleSubFields}
         {@const summaryTemplate = hasVariableTypes ? typeConfig?.summary || summary : summary}
         <div
           role="group"
           class="item"
           class:unknown-type={unknownType}
-          class:dragging={dragIndex === index}
-          draggable={grabbedIndex === index}
-          ondragstart={(/** @type {DragEvent} */ event) => {
+          class:dragging={sorter.dragIndex === index}
+          draggable={sorter.grabbedIndex === index}
+          ondragstart={(event) => {
             // A nested sortable list starts its own drag; the event just bubbles through here
-            if (event.target !== event.currentTarget) {
-              return;
-            }
-
-            dragIndex = index;
-            previewOrder = [...displayOrder];
-            // Let the editor pane scroll while the pointer is dragged near its top or
-            // bottom edge, so a long list can be reordered without letting go
-            startAutoScroll(itemList);
-
-            if (event.dataTransfer) {
-              event.dataTransfer.effectAllowed = 'move';
-              // Firefox doesn’t start a drag unless some data is attached to it
-              event.dataTransfer.setData('text/plain', _formatSummary(index, summaryTemplate));
+            if (event.target === event.currentTarget) {
+              sorter.onDragStart(index, event, _formatSummary(index, summaryTemplate));
             }
           }}
-          ondragend={(/** @type {DragEvent} */ event) => {
-            if (event.target !== event.currentTarget) {
-              return;
+          ondragend={(event) => {
+            if (event.target === event.currentTarget) {
+              sorter.onDragEnd();
             }
-
-            stopAutoScroll();
-            grabbedIndex = undefined;
-            dragIndex = undefined;
-            // A cancelled drag puts every item back where it started
-            previewOrder = undefined;
           }}
         >
           <ObjectHeader
@@ -714,12 +653,8 @@
                   itemCount={items.length}
                   disabled={isDuplicateField || items.length < 2}
                   icon="drag_handle"
-                  onGrab={() => {
-                    grabbedIndex = index;
-                  }}
-                  onRelease={() => {
-                    grabbedIndex = undefined;
-                  }}
+                  onGrab={() => sorter.grab(index)}
+                  onRelease={sorter.release}
                   onMove={(to, action) => moveItem(index, to, action)}
                 />
               {/if}
@@ -735,7 +670,7 @@
                   disabled={isAddDisabled}
                 >
                   {#snippet popup()}
-                    <Menu aria-label={_('list_item_options')}>
+                    <Menu ariaLabel={_('list_item_options')}>
                       {#if allowDuplicate}
                         <MenuItem
                           label={_('duplicate')}

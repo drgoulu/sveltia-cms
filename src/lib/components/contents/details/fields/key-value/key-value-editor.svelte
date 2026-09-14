@@ -8,7 +8,7 @@
   import { _ } from '@sveltia/i18n';
   import { Button, Icon, TextInput } from '@sveltia/ui';
   import equal from 'fast-deep-equal';
-  import { getContext, untrack } from 'svelte';
+  import { getContext } from 'svelte';
 
   import ValidationError from '$lib/components/contents/details/editor/validation-error.svelte';
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
@@ -20,6 +20,7 @@
     validatePairs,
   } from '$lib/services/contents/fields/key-value/helpers';
   import { getDirection } from '$lib/services/contents/i18n';
+  import { watch } from '$lib/services/utils/state.svelte';
 
   /**
    * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
@@ -82,6 +83,7 @@
   const updatePairs = () => {
     const draft = entryDraft.current;
 
+    /* v8 ignore next 3 -- the editor is only rendered while the draft is there */
     if (!draft) {
       return;
     }
@@ -118,6 +120,7 @@
   const addPair = () => {
     const draft = entryDraft.current;
 
+    /* v8 ignore next 3 -- the editor is only rendered while the draft is there */
     if (!draft) {
       return;
     }
@@ -164,21 +167,19 @@
     savePairs({ draft, valueStoreKey, fieldConfig, keyPath, locale, pairs });
   };
 
-  $effect(() => {
-    void [getValueMapSnapshot(entryDraft.current, locale, valueStoreKey)];
-
-    untrack(() => {
+  watch(
+    () => [getValueMapSnapshot(entryDraft.current, locale, valueStoreKey)],
+    () => {
       updatePairs();
-    });
-  });
+    },
+  );
 
-  $effect(() => {
-    void [$state.snapshot(pairs)];
-
-    untrack(() => {
+  watch(
+    () => $state.snapshot(pairs),
+    () => {
       updateStore();
-    });
-  });
+    },
+  );
 </script>
 
 {#if pairs.length}
@@ -202,7 +203,7 @@
               flex
               bind:value={pair[0]}
               invalid={!!validations[index]}
-              aria-label={keyLabel}
+              ariaLabel={keyLabel}
               aria-errormessage={validations[index] ? `${fieldId}-kv-error` : undefined}
               oninput={() => {
                 edited[index] = true;
@@ -223,7 +224,7 @@
               {readonly}
               flex
               bind:value={pair[1]}
-              aria-label={valueLabel}
+              ariaLabel={valueLabel}
               onkeydown={(event) => {
                 // Move focus or add a new pair with Enter key
                 if (event.key === 'Enter' && !event.isComposing) {

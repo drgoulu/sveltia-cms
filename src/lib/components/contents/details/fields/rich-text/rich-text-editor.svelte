@@ -6,14 +6,13 @@
 -->
 <script>
   import { TextEditor } from '@sveltia/ui';
-  import { getDateTimeParts } from '@sveltia/utils/datetime';
   import { sleep } from '@sveltia/utils/misc';
   import {
     $createParagraphNode as createParagraphNode,
     getNearestEditorFromDOMNode,
     $insertNodes as insertNodes,
   } from 'lexical';
-  import { getContext, tick, untrack } from 'svelte';
+  import { getContext, tick } from 'svelte';
 
   import { customComponentRegistry } from '$lib/services/api/registries';
   import { cmsConfig } from '$lib/services/config';
@@ -39,15 +38,16 @@
     getComponentDef,
     HUGO_COMPONENT_NAMES,
   } from '$lib/services/contents/fields/rich-text/components/definitions';
+  import {
+    getDroppedImages,
+    getPastedImages,
+  } from '$lib/services/contents/fields/rich-text/images';
   import { getCanonicalLocale, getDirection } from '$lib/services/contents/i18n';
   import { getDefaultMediaLibraryOptions } from '$lib/services/integrations/media-libraries/default';
-  import {
-    RASTER_IMAGE_EXTENSION_REGEX,
-    SUPPORTED_IMAGE_TYPES,
-    VECTOR_IMAGE_EXTENSION_REGEX,
-  } from '$lib/services/utils/media/image';
+  import { watch } from '$lib/services/utils/state.svelte';
 
   /**
+   * @import { ImageEntry } from '$lib/services/contents/fields/rich-text/images';
    * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
    * @import {
    * EditorComponentDefinition,
@@ -58,10 +58,6 @@
    */
 
   /**
-   * @typedef {{ file?: File, src?: string, alt?: string }} ImageEntry
-   */
-
-  /**
    * @typedef {object} Props
    * @property {MarkdownField | RichTextField} fieldConfig Field configuration.
    * @property {string | undefined} currentValue Field value.
@@ -69,11 +65,11 @@
 
   const entryDraft = getEntryDraftContext();
 
-  const DATA_URL_REGEX = /^data:(?<type>image\/.+?);base64,.+/;
-
   const defaultConfig = cmsConfig.current?.field_defaults?.richtext ?? {};
+  /* v8 ignore start -- the editor is always rendered within a field editor */
   /** @type {FieldEditorContext} */
   const { fieldContext, parentComponentNames, valueStoreKey } = getContext('field-editor') ?? {};
+  /* v8 ignore stop */
   const inEditorComponent = fieldContext === 'rich-text-editor-component';
   const componentName = parentComponentNames.at(-1);
 
@@ -119,8 +115,10 @@
     minimal = defaultConfig.minimal ?? false,
   } = $derived(fieldConfig);
   const modes = $derived(_modes.map((name) => NODE_NAME_MAP[name]).filter(Boolean));
+  /* v8 ignore start -- the editor is only rendered while the draft is there */
   const isIndexFile = $derived(entryDraft.current?.isIndexFile ?? false);
   const collectionName = $derived(entryDraft.current?.collectionName ?? '');
+  /* v8 ignore stop */
   const fileName = $derived(entryDraft.current?.fileName);
   const valueMap = $derived(getValueMapSnapshot(entryDraft.current, locale, valueStoreKey));
   const buttons = $derived(
@@ -246,142 +244,25 @@
   };
 
   /**
-   * Handle pasted file. If it’s an image, insert it to the editor content.
+   * Handle pasted content. If it includes images, insert them to the editor content.
    * @param {ClipboardEvent} event `paste` event.
    */
   const onPaste = async (event) => {
-    const { target, clipboardData } = event;
-    const pastedItems = clipboardData?.items;
-
-    if (!pastedItems) {
-      return;
-    }
-
-    /** @type {ImageEntry[]} */
-    let images = [];
-
-    const fileIndex = [...pastedItems].findIndex(
-      ({ kind, type }) => kind === 'file' && SUPPORTED_IMAGE_TYPES.includes(type),
-    );
-
-    const htmlIndex = [...pastedItems].findIndex(
-      ({ kind, type }) => kind === 'string' && type === 'text/html',
-    );
-
-    if (fileIndex > -1 && htmlIndex > -1) {
-      // Handle pasted remote files: When a remote image is copied within the browser, both file and
-      // HTML with `<img>` are added to the clipboard. Scrape the filename and alt text from the
-      // HTML content
-      const file = fileIndex > -1 ? pastedItems[fileIndex].getAsFile() : undefined;
-
-      if (!file) {
-        return;
-      }
-
-      // Clear the clipboard to prevent Lexical from pasting the HTML
-      pastedItems.clear();
-      event.stopPropagation();
-
-      let alt = '';
-      let _fileName = file.name;
-
-      /** @type {?HTMLImageElement} */
-      const img = await new Promise((resolve) => {
-        pastedItems[htmlIndex].getAsString((str) => {
-          resolve(new DOMParser().parseFromString(str, 'text/html').querySelector('img'));
-        });
-      });
-
-      if (img) {
-        alt = img.alt;
-
-        if (/^https?:/.test(img.src)) {
-          const name = new URL(img.src).pathname.split('/').pop() ?? '';
-
-          if (RASTER_IMAGE_EXTENSION_REGEX.test(name) || VECTOR_IMAGE_EXTENSION_REGEX.test(name)) {
-            _fileName = name;
-          }
-        }
-      }
-
-      images = [{ file: new File([file], _fileName, { type: file.type }), alt }];
-    } else {
-      // Handle pasted local files
-      images = [...clipboardData.files]
-        .filter(({ type }) => SUPPORTED_IMAGE_TYPES.includes(type))
-        .map((file) => ({ file }));
-    }
+    const { target } = event;
+    const images = await getPastedImages(event);
 
     if (images.length) {
-      images = images.map(({ file, alt }, index) => {
-        // Rename pasted file with generic name
-        if (file?.name === 'image.png') {
-          const { year, month, day, hour, minute, second } = getDateTimeParts();
-          const suffix = images.length > 1 ? `-${index + 1}` : '';
-          const _fileName = `${year}${month}${day}-${hour}${minute}${second}${suffix}.png`;
-
-          file = new File([file], _fileName, { type: file.type });
-        }
-
-        return { file, alt };
-      });
-
       await insertImages({ target, images });
     }
   };
 
   /**
-   * Handle dropped file(s). If it’s an image, insert it to the editor content.
+   * Handle dropped content. If it includes images, insert them to the editor content.
    * @param {DragEvent} event `drop` event.
    */
   const onDrop = async (event) => {
-    const { target, dataTransfer } = event;
-    const droppedFiles = dataTransfer?.files;
-    /** @type {ImageEntry[]} */
-    let images = [];
-
-    if (droppedFiles?.length) {
-      // Handle dropped local files
-      images = [...droppedFiles]
-        .filter(({ type }) => SUPPORTED_IMAGE_TYPES.includes(type))
-        .map((file) => ({ file }));
-    } else {
-      // Handle dropped remote files: The clipboard doesn’t contain the file itself but the HTML may
-      // contain `<img>`; use the `src` and `alt` attributes to insert a new image. We don’t fetch
-      // the file unless a data URL is given, because it’s likely to fail due to the external site’s
-      // CORS policy
-      const html = event.dataTransfer?.getData('text/html');
-
-      if (html) {
-        const img = new DOMParser().parseFromString(html, 'text/html').querySelector('img');
-
-        if (img) {
-          const { src, alt } = img;
-          const dataMatcher = src.match(DATA_URL_REGEX);
-          /** @type {File | undefined} */
-          let file = undefined;
-
-          if (dataMatcher) {
-            const type = dataMatcher.groups?.type ?? '';
-
-            if (SUPPORTED_IMAGE_TYPES.includes(type)) {
-              try {
-                const blob = await (await fetch(src)).blob();
-                const { year, month, day, hour, minute, second } = getDateTimeParts();
-                const extension = type.split('/')[1];
-                const _fileName = `${year}${month}${day}-${hour}${minute}${second}.${extension}`;
-
-                file = new File([blob], _fileName, { type });
-              } catch {
-                return;
-              }
-            }
-          }
-
-          images = [{ file, src, alt }];
-        }
-      }
-    }
+    const { target } = event;
+    const images = await getDroppedImages(event);
 
     if (images.length) {
       await insertImages({ target, images });
@@ -411,7 +292,7 @@
     // Remove values that are not present in the editor anymore. Otherwise, they will trigger
     // validation errors when the entry is saved.
     cleanupTimeout = window.setTimeout(() => {
-      Object.keys(draft.extraValues[locale] ?? {}).forEach((key) => {
+      Object.keys(draft.extraValues[locale]).forEach((key) => {
         const [prefix] = key.match(COMPONENT_NAME_PREFIX_REGEX) ?? [];
 
         if (
@@ -439,21 +320,19 @@
     }
   };
 
-  $effect(() => {
-    void [currentValue];
-
-    untrack(() => {
+  watch(
+    () => currentValue,
+    () => {
       setInputValue();
-    });
-  });
+    },
+  );
 
-  $effect(() => {
-    void [inputValue];
-
-    untrack(() => {
+  watch(
+    () => inputValue,
+    () => {
       setCurrentValue();
-    });
-  });
+    },
+  );
 
   // Cancel the pending cleanup when the component is destroyed, e.g. when the content details
   // overlay is closed. Otherwise, the callback would read reactive state belonging to a destroyed
@@ -506,6 +385,8 @@
   };
 
   $effect(() => {
+    // The wrapper is bound before the effects run, so it’s always there
+    /* v8 ignore next 3 */
     if (!wrapper) {
       return undefined;
     }

@@ -27,7 +27,6 @@
   } from '$lib/services/contents/editor/fields';
   import { getKeysByPrefix } from '$lib/services/contents/entry/key-paths';
   import { formatSummary } from '$lib/services/contents/fields/object/helpers';
-  import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
   import { env } from '$lib/services/user/env.svelte';
 
   /**
@@ -75,12 +74,12 @@
   } = $derived(fieldConfig);
   const { fields } = $derived(/** @type {ObjectFieldWithSubFields} */ (fieldConfig));
   const { types, typeKey = 'type' } = $derived(/** @type {ObjectFieldWithTypes} */ (fieldConfig));
+  /* v8 ignore start -- the editor is only rendered while the draft is there */
   const isIndexFile = $derived(entryDraft.current?.isIndexFile ?? false);
-  const collection = $derived(entryDraft.current?.collection);
   const collectionName = $derived(entryDraft.current?.collectionName ?? '');
-  const collectionFile = $derived(entryDraft.current?.collectionFile);
+  /* v8 ignore stop */
   const fileName = $derived(entryDraft.current?.fileName);
-  const { defaultLocale } = $derived((collectionFile ?? collection)?._i18n ?? DEFAULT_I18N_CONFIG);
+  const defaultLocale = $derived(entryDraft.current?.defaultLocale);
   const valueMap = $derived(getValueMapSnapshot(entryDraft.current, locale, valueStoreKey));
   const getFieldArgs = $derived({ collectionName, fileName, valueMap, isIndexFile });
   const hasValues = $derived(
@@ -97,7 +96,9 @@
   );
   const hasVariableTypes = $derived(Array.isArray(types));
   const typeKeyPath = $derived(`${keyPath}.${typeKey}`);
+  /* v8 ignore start -- only read for an object with variable types */
   const type = $derived(hasVariableTypes ? valueMap[typeKeyPath] : undefined);
+  /* v8 ignore stop */
   const typeConfig = $derived(type ? types?.find(({ name }) => name === type) : undefined);
   const unknownType = $derived(hasVariableTypes && !typeConfig);
   const subFields = $derived((hasVariableTypes ? typeConfig?.fields : fields) ?? []);
@@ -135,6 +136,7 @@
     suspendAutoDuplication(async () => {
       const draft = entryDraft.current;
 
+      /* v8 ignore next 3 -- the button is only offered while the draft is there */
       if (!draft) {
         return;
       }
@@ -149,7 +151,9 @@
       }
 
       const newContent = Object.fromEntries(
-        Object.entries(getDefaultValues({ fields: subFields, locale, defaultLocale })) //
+        Object.entries(
+          getDefaultValues({ fields: subFields, locale, defaultLocale: draft.defaultLocale }),
+        ) //
           .map(([_keyPath, value]) => [`${keyPath}.${_keyPath}`, value]),
       );
 

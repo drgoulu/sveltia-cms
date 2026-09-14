@@ -8,10 +8,11 @@
   import { CodeEditor } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
   import { isObject } from '@sveltia/utils/object';
-  import { getContext, untrack } from 'svelte';
+  import { getContext } from 'svelte';
 
   import { getEntryDraftContext } from '$lib/services/contents/draft/state.svelte';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
+  import { watch } from '$lib/services/utils/state.svelte';
 
   /**
    * @import { FieldEditorContext, FieldEditorProps } from '$lib/types/private';
@@ -94,36 +95,43 @@
       if (currentValue !== code) {
         currentValue = code;
       }
-    } else if (entryDraft.current) {
-      if (!isObject(valueMap[keyPath]) || Object.keys(valueMap[keyPath]).length) {
-        entryDraft.current[valueStoreKey][locale][keyPath] = {};
-      }
 
-      if (valueMap[codeKeyPath] !== code) {
-        entryDraft.current[valueStoreKey][locale][codeKeyPath] = code;
-      }
+      return;
+    }
 
-      if (valueMap[langKeyPath] !== lang) {
-        entryDraft.current[valueStoreKey][locale][langKeyPath] = lang;
-      }
+    const draft = entryDraft.current;
+
+    /* v8 ignore next 3 -- the editor is only rendered while the draft is there */
+    if (!draft) {
+      return;
+    }
+
+    if (!isObject(valueMap[keyPath]) || Object.keys(valueMap[keyPath]).length) {
+      draft[valueStoreKey][locale][keyPath] = {};
+    }
+
+    if (valueMap[codeKeyPath] !== code) {
+      draft[valueStoreKey][locale][codeKeyPath] = code;
+    }
+
+    if (valueMap[langKeyPath] !== lang) {
+      draft[valueStoreKey][locale][langKeyPath] = lang;
     }
   };
 
-  $effect(() => {
-    void [valueMap];
-
-    untrack(() => {
+  watch(
+    () => valueMap,
+    () => {
       setInputValue();
-    });
-  });
+    },
+  );
 
-  $effect(() => {
-    void [code, lang];
-
-    untrack(() => {
+  watch(
+    () => [code, lang],
+    () => {
       setCurrentValue();
-    });
-  });
+    },
+  );
 </script>
 
 {#await sleep() then}

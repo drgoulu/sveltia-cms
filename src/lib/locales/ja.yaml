@@ -110,7 +110,7 @@ clipboard_error: クリップボードにコピーできませんでした。
 welcome_message: '{$name} へようこそ'
 # Footer text with CMS branding
 # {$name} is the CMS brand name shown in the footer, Sveltia CMS by default
-powered_by: 'Powered by {$name}'
+powered_by: Powered by {$name}
 
 # Shown during initial configuration and data loading
 loading_cms_config: CMS 設定を読み込んでいます…
@@ -286,7 +286,7 @@ release_notes: リリースノート
 announcements: お知らせ
 # Version badge aria-label in the release notes menu item
 # {$version} is the current app version string
-version_x: 'バージョン {$version}'
+version_x: バージョン {$version}
 # Additional help menu items
 report_issue: 問題を報告
 share_feedback: フィードバックを共有
@@ -572,6 +572,10 @@ file_extension_change_warning: 拡張子が実際のファイル形式と一致�
 replace_asset: アセットを差し替え
 # {$name} is the asset being replaced
 replace_x: '{$name} を差し替え'
+replace_file: ファイルを差し替え
+replace_image: 画像を差し替え
+remove_file: ファイルを削除
+remove_image: 画像を削除
 
 # File selection prompts: drop zones and file pickers
 # Browse prompt shown when drag-and-drop is unavailable on desktop and pointer devices
@@ -1412,6 +1416,9 @@ cloud_storage:
 
   aws_s3:
     auth_key_label: シークレットアクセスキー
+
+  bunny_storage:
+    auth_key_label: ストレージゾーンパスワード
 
   cloudflare_r2:
     auth_key_label: シークレットアクセスキー

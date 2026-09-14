@@ -7,8 +7,6 @@
 
   import FieldEditor from '$lib/components/contents/details/editor/field-editor.svelte';
   import ObjectHeader from '$lib/components/contents/details/fields/object/object-header.svelte';
-  import { replaceTemplateTags } from '$lib/services/common/template';
-  import { applyTransformations, parseTransformations } from '$lib/services/common/transformations';
   import { normalizeContent } from '$lib/services/contents/draft/create/normalize';
   import { getDefaultValues } from '$lib/services/contents/draft/defaults';
   import {
@@ -18,7 +16,9 @@
   import { validateFields } from '$lib/services/contents/draft/validate/fields';
   import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svelte';
   import { getKeysByPrefix } from '$lib/services/contents/entry/key-paths';
+  import { formatComponentSummary } from '$lib/services/contents/fields/rich-text/components/summary';
   import { unflattenMap } from '$lib/services/utils/object';
+  import { watch } from '$lib/services/utils/state.svelte';
 
   /**
    * @import { EntryDraftState } from '$lib/services/contents/draft/state.svelte';
@@ -49,6 +49,8 @@
     get current() {
       return entryDraft?.current;
     },
+    /* v8 ignore start -- only the entry editor toolbar and overlay, which are never rendered within
+    a component, replace the draft or check whether it’s been modified */
     /**
      * Replace the current draft.
      * @param {EntryDraft | null | undefined} draft Draft.
@@ -65,6 +67,7 @@
     get modified() {
       return entryDraft?.modified ?? false;
     },
+    /* v8 ignore stop */
   });
 
   /**
@@ -125,8 +128,10 @@
    */
   let isNewComponent = $state(false);
 
+  /* v8 ignore start -- the key paths are resolved together once the component is in place */
   const keyPathPrefix = $derived(!keyPath ? '' : `${keyPath}:${fieldId}:`);
   const typedKeyPathPrefix = $derived(!typedKeyPath ? '' : `${typedKeyPath}:${fieldId}:`);
+  /* v8 ignore stop */
   /**
    * Find the first string/text field from the fields definition.
    * @type {Field | undefined}
@@ -180,6 +185,7 @@
    * Open the dialog and take a snapshot of current values (dialog mode only).
    */
   const openDialog = () => {
+    /* v8 ignore next -- the values are set up before the dialog can be opened */
     valuesSnapshot = currentValues ? { ...currentValues } : undefined;
     dialogOpen = true;
   };
@@ -190,8 +196,10 @@
   const restoreValues = () => {
     const draft = entryDraft?.current;
 
+    /* v8 ignore next -- the dialog is only open while the draft is there, with a snapshot */
     if (draft && locale && keyPath && valuesSnapshot) {
       // Clear current values
+      /* v8 ignore next -- the locale holds the component’s own values at least */
       Object.keys(draft[valueStoreKey][locale] ?? {}).forEach((key) => {
         if (key.startsWith(keyPathPrefix)) {
           delete draft[valueStoreKey][locale][key];
@@ -224,16 +232,23 @@
   const handleOk = () => {
     const draft = entryDraft?.current;
 
+    /* v8 ignore next 3 -- the dialog can only be confirmed while the draft is being edited */
     if (!draft) {
       return;
     }
 
-    const { validities: extraValidities } = validateFields('extraValues', { draft });
+    const { validities: extraValidities, validationMessages: extraMessages } = validateFields(
+      'extraValues',
+      { draft },
+    );
 
     Object.keys(draft.validities).forEach((loc) => {
       Object.assign(draft.validities[loc], extraValidities[loc]);
+      // The field editors show the messages, not the validity flags
+      Object.assign(draft.validationMessages[loc], extraMessages[loc]);
     });
 
+    /* v8 ignore next -- the fields were just validated in this locale */
     const localeValidities = extraValidities[locale] ?? {};
 
     const thisComponentValid = !Object.entries(localeValidities).some(
@@ -264,52 +279,6 @@
   };
 
   /**
-   * Format a summary template by replacing `{{fieldName}}` placeholders with values (dialog mode
-   * only). Supports nested properties and transformations like the CMS object field summary.
-   * @param {string} template Summary template, e.g. `{{title}} - {{linkType.url | upper}}`.
-   * @param {RawEntryContent} _values Current values (unflattened).
-   * @returns {string | null} Formatted summary, or null if template is empty or result is empty.
-   */
-  const formatSimpleSummary = (template, _values) => {
-    if (!template || !_values) {
-      return null;
-    }
-
-    const flatValues = flatten(_values);
-
-    const result = replaceTemplateTags(template, (__, placeholder) => {
-      const { value: tag, transformations } = parseTransformations(placeholder);
-      const fieldName = tag.replace(/^fields\./, '');
-      let value = flatValues[fieldName];
-
-      if (value === undefined || value === null) {
-        return '';
-      }
-
-      if (transformations.length) {
-        value = applyTransformations({
-          fieldConfig: fields.find((f) => f.name === fieldName),
-          value,
-          transformations,
-          locale,
-        });
-      }
-
-      return String(value);
-    });
-
-    // Return `null` if the result (after stripping all placeholder-based content) is empty. This
-    // handles the case where all field values are empty but literal text (e.g. ' — ') remains.
-    const strippedTemplate = replaceTemplateTags(template, () => '');
-
-    if (result !== strippedTemplate && result.trim()) {
-      return result.trim();
-    }
-
-    return null;
-  };
-
-  /**
    * The text to display in the placeholder (dialog mode only). Priority:
    * 1. Formatted summary template (if provided and produces non-empty result)
    * 2. First string field’s value
@@ -320,13 +289,10 @@
     // render or before the store has been notified with the values.
     const hasFieldValues = fields.some((f) => currentValues?.[f.name] !== undefined);
     const vals = hasFieldValues ? currentValues : values;
+    const formatted = formatComponentSummary({ template: summary, values: vals, fields, locale });
 
-    if (summary && vals) {
-      const formatted = formatSimpleSummary(summary, vals);
-
-      if (formatted) {
-        return formatted;
-      }
+    if (formatted) {
+      return formatted;
     }
 
     if (displayField && vals) {
@@ -447,12 +413,14 @@
 
       // Remove the values and validities from the draft when the component is unmounted
       if (draft) {
+        /* v8 ignore next -- the locale holds the component’s own values at least */
         Object.keys(draft[valueStoreKey][locale] ?? {}).forEach((key) => {
           if (key.startsWith(keyPathPrefix)) {
             delete draft[valueStoreKey][locale][key];
           }
         });
 
+        /* v8 ignore next -- the draft holds validities for each of its locales */
         Object.keys(draft.validities[locale] ?? {}).forEach((key) => {
           if (key.startsWith(keyPathPrefix)) {
             delete draft.validities[locale][key];
@@ -462,14 +430,15 @@
     };
   });
 
-  $effect(() => {
-    void [values, locale, keyPath];
-
-    untrack(() => {
+  watch(
+    () => [values, locale, keyPath],
+    () => {
       if (entryDraft?.current && locale && keyPath) {
         const { defaultLocale } = entryDraft.current;
 
-        values ??= unflatten(getDefaultValues({ fields, locale, defaultLocale })) ?? {};
+        values ??= /** @type {Record<string, any>} */ (
+          unflatten(getDefaultValues({ fields, locale, defaultLocale }))
+        );
         values.__sc_component_name = componentName;
 
         // Reconcile the values parsed from the document with the component’s field definitions,
@@ -503,8 +472,8 @@
           Object.assign(entryDraft.current[valueStoreKey][locale], newEntries);
         }
       }
-    });
-  });
+    },
+  );
 
   // Block mode: forward onChange whenever currentValues change
   $effect(() => {
@@ -551,7 +520,17 @@
     {displayText}
   </span>
 
-  <Dialog title={label} bind:open={dialogOpen} size="large" showOk={false} showCancel={false}>
+  <Dialog
+    title={label}
+    bind:open={dialogOpen}
+    size="large"
+    showOk={false}
+    showCancel={false}
+    onCancel={() => {
+      // The Escape key dismisses the dialog just like the Cancel button
+      handleCancel();
+    }}
+  >
     <div role="none" class="fields">
       {#if locale && keyPath}
         {#each fields as fieldConfig (fieldConfig.name)}
@@ -606,10 +585,11 @@
     data-key-path-prefix={keyPathPrefix}
     data-component-name={componentName}
     onkeydowncapture={(event) => {
-      // Allow to select all in any `TextInput` within the component below using Ctrl+A
+      // Allow to select all in any `TextInput` within the component below using Ctrl+A. Svelte
+      // delegates `keydown` to the root, which the event never reaches once it’s stopped, so the
+      // block’s own handling has to happen here as well
       event.stopPropagation();
-    }}
-    onkeydown={(event) => {
+
       if (
         !(/** @type {HTMLElement} */ (event.target).matches('button, input, textarea')) &&
         event.key !== 'Tab'

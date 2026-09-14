@@ -8,6 +8,7 @@
     selectedCloudService,
     selectedExternalAssets,
   } from '$lib/services/assets/external';
+  import { toggleListItem } from '$lib/services/utils/array';
 
   /**
    * @import { ExternalAsset, ViewType } from '$lib/types/private';
@@ -32,19 +33,28 @@
   const selected = $derived(selectedExternalAssets.current.some((a) => a.id === asset.id));
 
   /**
+   * Show the details of the asset.
+   */
+  const showDetails = () => {
+    const service = selectedCloudService.current;
+
+    /* v8 ignore next 3 -- the list is only shown while a service is selected */
+    if (service) {
+      goto(getExternalAssetPath(service, asset), { transitionType: 'forwards' });
+    }
+  };
+
+  /**
    * Update the asset selection.
    * @param {boolean} _selected Whether the current asset item is selected.
    */
   const updateSelection = (_selected) => {
-    const assets = selectedExternalAssets.current;
-
-    if (_selected && !selected) {
-      selectedExternalAssets.current = [...assets, asset];
-    }
-
-    if (!_selected && selected) {
-      selectedExternalAssets.current = assets.filter((a) => a.id !== asset.id);
-    }
+    selectedExternalAssets.current = toggleListItem(
+      selectedExternalAssets.current,
+      asset,
+      _selected,
+      (a, b) => a.id === b.id,
+    );
   };
 </script>
 
@@ -61,10 +71,6 @@
     focusedExternalAsset.current = asset;
   }}
   onPreview={() => {
-    const service = selectedCloudService.current;
-
-    if (service) {
-      goto(getExternalAssetPath(service, asset), { transitionType: 'forwards' });
-    }
+    showDetails();
   }}
 />

@@ -7,7 +7,7 @@
   import { _ } from '@sveltia/i18n';
   import { EmptyState, Group } from '@sveltia/ui';
 
-  import { currentView } from '$lib/services/assets/view';
+  import { currentView } from '$lib/services/assets/view/settings';
   import { env } from '$lib/services/user/env.svelte';
 
   /**
@@ -32,7 +32,7 @@
 </script>
 
 {#if env.isLargeScreen && currentView.current.showInfo}
-  <Group id="asset-info" class="secondary-sidebar" aria-label={_('asset_info')}>
+  <Group id="asset-info" class="secondary-sidebar" ariaLabel={_('asset_info')}>
     {#if asset}
       {@render children(asset)}
     {:else}
