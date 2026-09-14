@@ -366,7 +366,7 @@ export const fetchDeployments = async (targets) => {
         return;
       } catch (ex) {
         // eslint-disable-next-line no-console
-        console.warn('Falling back to a request per deployment source.', ex);
+        console.debug('Falling back to a request per deployment source.', ex);
         askSeparately = true;
       }
     }
