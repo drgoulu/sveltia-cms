@@ -652,6 +652,31 @@ describe('matchesCollectionFilter()', () => {
     });
   });
 
+  test('matches missing/null property when filter value is false', async () => {
+    const { getPropertyValue } = await import('$lib/services/contents/entry/fields');
+
+    const collection = {
+      name: 'posts',
+      _type: 'entry',
+      _i18n: { defaultLocale: 'en' },
+      filter: { field: 'draft', value: false },
+    };
+
+    const entry = { id: '1', locales: { en: { content: {} } } };
+
+    // When draft is undefined in frontmatter (returns undefined -> null in getPropertyValue)
+    vi.mocked(getPropertyValue).mockReturnValueOnce(undefined);
+    expect(matchesCollectionFilter(collection, entry)).toBe(true);
+
+    // When draft is false
+    vi.mocked(getPropertyValue).mockReturnValueOnce(false);
+    expect(matchesCollectionFilter(collection, entry)).toBe(true);
+
+    // When draft is true
+    vi.mocked(getPropertyValue).mockReturnValueOnce(true);
+    expect(matchesCollectionFilter(collection, entry)).toBe(false);
+  });
+
   test('matches the field value against the filter pattern', async () => {
     const { getPropertyValue } = await import('$lib/services/contents/entry/fields');
     const { getRegex } = await import('$lib/services/utils/regex');

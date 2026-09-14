@@ -130,7 +130,7 @@ export const matchesCollectionFilter = (collection, entry) => {
     return pattern.test(value);
   }
 
-  return values.includes(value);
+  return values.includes(value) || (value === null && values.includes(false));
 };
 
 /**
