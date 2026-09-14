@@ -1,7 +1,7 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { Button, EmptyState } from '@sveltia/ui';
-  import { sleep } from '@sveltia/utils/misc';
+  import { onDestroy } from 'svelte';
 
   import EntryEditor from '$lib/components/contents/details/editor/entry-editor.svelte';
   import EntryPreview from '$lib/components/contents/details/preview/entry-preview.svelte';
@@ -45,99 +45,250 @@
 
   /** @type {HTMLElement | undefined} */
   let contentArea = $state();
+  /** @type {MutationObserver | undefined} */
+  let mutationObserver;
+  /** @type {HTMLIFrameElement | null} */
+  let trackedIframe = null;
 
-  /**
-   * Sync the scroll position with the other edit/preview pane.
-   */
-  const syncScrollPosition = () => {
-    window.requestAnimationFrame(() => {
-      if (!syncScrolling || !contentArea || !thisPaneContentArea || !thatPaneContentArea) {
-        return;
-      }
-
-      const isIframe = thisPaneContentArea !== contentArea;
-      const { x, y } = isIframe ? { x: 0, y: 0 } : thisPaneContentArea.getBoundingClientRect();
-      const { ownerDocument, scrollTop, scrollHeight, clientHeight } = thisPaneContentArea;
-      const scrollTopMax = scrollHeight - clientHeight;
-      const scrollRatio = scrollTop / scrollTopMax;
-
-      // Find the field section in the top left corner of the content area. Use `findLast` to
-      // capture the topmost element; otherwise the List field sticky headers will interfere with
-      // the positioning.
-      // @see https://github.com/sveltia/sveltia-cms/issues/883
-      const thisElement = /** @type {HTMLElement | undefined} */ (
-        ownerDocument.elementsFromPoint(x + 80, y).findLast((e) => e.matches('[data-key-path]'))
-      );
-
-      if (!thisElement) {
-        // Calculate the scroll position based on the current scroll position of the this pane
-        thatPaneContentArea.scrollTop = thatPaneContentArea.scrollHeight * scrollRatio;
-
-        return;
-      }
-
-      const { keyPath } = thisElement.dataset;
-      const { top, height } = thisElement.getBoundingClientRect();
-      const ratio = (y - top) / height;
-
-      const thatElement = /** @type {HTMLElement | undefined} */ (
-        thatPaneContentArea.querySelector(`[data-key-path="${CSS.escape(keyPath ?? '')}"]`)
-      );
-
-      if (ratio < 0 || ratio > 1 || !thatElement) {
-        return;
-      }
-
-      // Scroll the other pane to the corresponding element, adjusting for the current scroll
-      // position and the ratio of the scroll position within the element.
-      thatPaneContentArea.scrollTop = thatElement.offsetTop - y + thatElement.clientHeight * ratio;
-    });
-  };
+  let isSyncing = false;
+  /** @type {number | null} */
+  let rafId = null;
 
   /** @type {AddEventListenerOptions} */
   const eventOptions = { capture: true, passive: true };
 
   /**
-   * Initialize the scroll synchronization by setting up event listeners and ensuring the content
-   * area is ready. The content area is either the main content area or the iframe’s content area.
-   * An iframe is used only when a custom preview stylesheet is provided.
+   * Hide scrollbar inside an iframe document so only one vertical scrollbar is visible.
+   * @param {Document | undefined | null} doc Target document.
    */
-  const initializeScrollSync = async () => {
+  const hideIframeScrollbar = (doc) => {
+    try {
+      if (doc && !doc.getElementById('sveltia-hide-scrollbar')) {
+        const style = doc.createElement('style');
+
+        style.id = 'sveltia-hide-scrollbar';
+        style.textContent = `
+          html, body {
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
+          }
+          html::-webkit-scrollbar, body::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+          }
+        `;
+        (doc.head || doc.documentElement)?.appendChild(style);
+      }
+    } catch {
+      // Ignore potential cross-origin error
+    }
+  };
+
+  /**
+   * Sync the scroll position with the other edit/preview pane.
+   */
+  const syncScrollPosition = () => {
+    if (!syncScrolling || !contentArea || !thisPaneContentArea || !thatPaneContentArea) {
+      return;
+    }
+
+    const { scrollTop, scrollHeight, clientHeight } = thisPaneContentArea;
+    const thisMax = scrollHeight - clientHeight;
+
+    if (thisMax <= 0) return;
+
+    const thatMax = thatPaneContentArea.scrollHeight - thatPaneContentArea.clientHeight;
+
+    if (thatMax <= 0) return;
+
+    const scrollRatio = scrollTop / thisMax;
+
+    // Check if standard view key-path matching is available
+    const isIframe = thisPaneContentArea !== contentArea;
+    const { x, y } = isIframe ? { x: 0, y: 0 } : thisPaneContentArea.getBoundingClientRect();
+    const ownerDoc = thisPaneContentArea.ownerDocument || document;
+    const thatHasKeyPaths = !!thatPaneContentArea.querySelector?.('[data-key-path]');
+
+    if (thatHasKeyPaths && ownerDoc.elementsFromPoint) {
+      const thisElement = /** @type {HTMLElement | undefined} */ (
+        ownerDoc.elementsFromPoint(x + 80, y).findLast((e) => e.matches('[data-key-path]'))
+      );
+
+      if (thisElement) {
+        const { keyPath } = thisElement.dataset;
+        const { top, height } = thisElement.getBoundingClientRect();
+        const ratio = (y - top) / height;
+
+        const thatElement = /** @type {HTMLElement | undefined} */ (
+          thatPaneContentArea.querySelector?.(`[data-key-path="${CSS.escape(keyPath ?? '')}"]`)
+        );
+
+        if (ratio >= 0 && ratio <= 1 && thatElement) {
+          isSyncing = true;
+          thatPaneContentArea.scrollTop = thatElement.offsetTop - y + thatElement.clientHeight * ratio;
+          window.requestAnimationFrame(() => {
+            isSyncing = false;
+          });
+
+          return;
+        }
+      }
+    }
+
+    // Proportional scroll for Hugo preview and general fallback
+    isSyncing = true;
+    thatPaneContentArea.scrollTop = Math.round(thatMax * scrollRatio);
+    window.requestAnimationFrame(() => {
+      isSyncing = false;
+    });
+  };
+
+  /**
+   * Throttled scroll listener handler.
+   */
+  const onScrollTrigger = () => {
+    if (isSyncing || !syncScrolling || !thisPaneContentArea || !thatPaneContentArea) {
+      return;
+    }
+
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+    }
+
+    rafId = requestAnimationFrame(() => {
+      rafId = null;
+      syncScrollPosition();
+    });
+  };
+
+  /**
+   * Detach scroll and wheel listeners from a target element.
+   * @param {HTMLElement | undefined | null} target Target element.
+   */
+  const detachListeners = (target) => {
+    if (!target) return;
+    target.removeEventListener('wheel', onScrollTrigger, eventOptions);
+    target.removeEventListener('touchmove', onScrollTrigger, eventOptions);
+    target.removeEventListener('scroll', onScrollTrigger, eventOptions);
+    target.ownerDocument?.defaultView?.removeEventListener('scroll', onScrollTrigger, eventOptions);
+  };
+
+  /**
+   * Attach scroll and wheel listeners to a target element.
+   * @param {HTMLElement | undefined | null} target Target element.
+   */
+  const attachListeners = (target) => {
+    if (!target) return;
+    target.addEventListener('wheel', onScrollTrigger, eventOptions);
+    target.addEventListener('touchmove', onScrollTrigger, eventOptions);
+    target.addEventListener('scroll', onScrollTrigger, eventOptions);
+    target.ownerDocument?.defaultView?.addEventListener('scroll', onScrollTrigger, eventOptions);
+  };
+
+  /**
+   * Setup scroll synchronization for an iframe (preview mode).
+   * @param {HTMLIFrameElement} iframe
+   */
+  const setupIframe = (iframe) => {
+    trackedIframe = iframe;
+
+    const onIframeReady = () => {
+      try {
+        const doc = iframe.contentDocument;
+
+        if (!doc) return;
+
+        hideIframeScrollbar(doc);
+
+        const scrollEl = doc.scrollingElement || doc.documentElement || doc.body;
+
+        if (scrollEl) {
+          detachListeners(thisPaneContentArea);
+          thisPaneContentArea = /** @type {HTMLElement} */ (scrollEl);
+          attachListeners(thisPaneContentArea);
+
+          // Restore scroll position to match the other pane
+          if (thatPaneContentArea) {
+            const thatMax = thatPaneContentArea.scrollHeight - thatPaneContentArea.clientHeight;
+
+            if (thatMax > 0) {
+              const ratio = thatPaneContentArea.scrollTop / thatMax;
+              const thisMax = scrollEl.scrollHeight - scrollEl.clientHeight;
+
+              if (thisMax > 0) {
+                scrollEl.scrollTop = Math.round(thisMax * ratio);
+              }
+            }
+          }
+        }
+      } catch {
+        // Ignore potential cross-origin error
+      }
+    };
+
+    iframe.removeEventListener('load', onIframeReady);
+    iframe.addEventListener('load', onIframeReady);
+
+    if (iframe.contentDocument?.readyState === 'complete') {
+      onIframeReady();
+    }
+  };
+
+  /**
+   * Initialize the scroll synchronization by setting up event listeners and ensuring the content
+   * area is ready.
+   */
+  const initializeScrollSync = () => {
     if (!contentArea) {
       return;
     }
 
-    if (thisPaneContentArea) {
-      // Remove previous event listeners if they exist
-      thisPaneContentArea.removeEventListener('wheel', syncScrollPosition, eventOptions);
-      thisPaneContentArea.removeEventListener('touchmove', syncScrollPosition, eventOptions);
-    }
+    detachListeners(thisPaneContentArea);
 
-    // Check if the preview iframe is used in the preview mode
+    // Look for either standard preview iframe or Hugo preview iframe
     const iframe = /** @type {HTMLIFrameElement | null} */ (
-      contentArea.querySelector('iframe.preview')
+      contentArea.querySelector('iframe.preview, iframe.hugo-preview-iframe')
     );
 
     if (iframe) {
-      // Wait for the content to be loaded in the iframe
-      await sleep(250);
-      thisPaneContentArea = /** @type {HTMLElement} */ (iframe?.contentDocument?.firstElementChild);
+      setupIframe(iframe);
     } else {
       thisPaneContentArea = contentArea;
+      attachListeners(thisPaneContentArea);
     }
 
-    if (thisPaneContentArea) {
-      thisPaneContentArea.scrollTop = 0;
-      // Add event listeners manually to use passive mode
-      thisPaneContentArea.addEventListener('wheel', syncScrollPosition, eventOptions);
-      thisPaneContentArea.addEventListener('touchmove', syncScrollPosition, eventOptions);
-    }
+    // Observe changes to contentArea to detect if an iframe is dynamically added or swapped
+    mutationObserver?.disconnect();
+    mutationObserver = new MutationObserver(() => {
+      const newIframe = /** @type {HTMLIFrameElement | null} */ (
+        contentArea?.querySelector('iframe.preview, iframe.hugo-preview-iframe')
+      );
+
+      if (newIframe && newIframe !== trackedIframe) {
+        setupIframe(newIframe);
+      } else if (!newIframe && trackedIframe) {
+        trackedIframe = null;
+        detachListeners(thisPaneContentArea);
+        thisPaneContentArea = contentArea;
+        attachListeners(thisPaneContentArea);
+      }
+    });
+
+    mutationObserver.observe(contentArea, { childList: true, subtree: true });
   };
 
+  onDestroy(() => {
+    mutationObserver?.disconnect();
+
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+    }
+
+    detachListeners(thisPaneContentArea);
+  });
+
   $effect(() => {
-    // Initialize the scroll synchronization when the content area is ready. The pane mode is also a
-    // dependency because the edit mode always uses the main content area, while the preview mode
-    // may use an iframe if a custom preview stylesheet is provided.
     void [thisPane.current?.mode, contentArea];
     initializeScrollSync();
   });
@@ -145,7 +296,12 @@
 
 <div role="none" {id} class="wrapper">
   {#if locale && entryDraft.current?.currentLocales[locale]}
-    <div role="none" class="content" bind:this={contentArea}>
+    <div
+      role="none"
+      class="content"
+      class:hide-scrollbar={mode === 'preview' && !!thatPaneContentArea}
+      bind:this={contentArea}
+    >
       <MainContent {locale} />
     </div>
   {:else if mode === 'edit'}
@@ -181,5 +337,17 @@
     @media (width < 768px) {
       --field-editor-padding: 12px;
     }
+
+    &.hide-scrollbar {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+
+      &::-webkit-scrollbar {
+        display: none;
+        width: 0;
+        height: 0;
+      }
+    }
   }
 </style>
+
