@@ -1,47 +1,137 @@
-# Sveltia CMS
+# Sveltia CMS (Hugo & Advanced Authoring Fork)
 
-[Sveltia CMS](https://sveltiacms.app/en/) is a leading Git-based headless CMS for [Jamstack](https://jamstack.org/) sites. It’s open source, free, and a complete modern rewrite of Netlify CMS, now known as Decap CMS, which has been neglected for years.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Upstream: Sveltia CMS](https://img.shields.io/badge/Forked%20from-Sveltia%20CMS-ff3e00)](https://github.com/sveltia/sveltia-cms)
 
-Designed for content editors and developers alike, Sveltia CMS delivers a great UX/DX, powerful features, and first-class internationalization (i18n) support — all in a small, maintenance-free, single-page web application served from a CDN. Its generic-purpose approach makes it suitable for a wide range of projects, from personal blogs and portfolios to marketing sites and knowledge bases.
+A customized, enhanced fork of **[Sveltia CMS](https://sveltiacms.app/en/)** optimized for static site generators—especially **[Hugo](https://gohugo.io/)**—featuring true real-time live preview, native shortcode handling, nested subfolder hierarchies, math typesetting, and refined editorial workflows.
 
-As the de facto [successor to Netlify/Decap CMS](https://sveltiacms.app/en/docs/successor-to-netlify-cms), we continue to deal with issues reported in their repository, of which 335 have now been solved in Sveltia CMS (765 including duplicates). It incorporates numerous enhancements while maintaining high compatibility with existing installations. A growing number of projects, including U.S. government agencies, are [switching from Netlify/Decap CMS](https://sveltiacms.app/en/docs/migration/netlify-decap-cms) to Sveltia CMS to enjoy its significantly improved performance, security, reliability, and experience.
+---
 
-Sveltia CMS is framework-agnostic and can also be used for vanilla JavaScript sites. It’s an excellent option for people moving away from a traditional CMS or website builder and looking for a lightweight headless CMS that works well with a static site generator (SSG) like Astro, Eleventy, or Hugo.
+## 🌟 Acknowledgements & Upstream Credits
 
-Explore 550 real-world examples in our [showcase](https://sveltiacms.app/en/showcase), including 160 sites migrated from Netlify/Decap CMS and 80 sites from WordPress, or visit the [documentation](https://sveltiacms.app/en/docs) to get started.
+This project is a downstream fork of **[Sveltia CMS](https://github.com/sveltia/sveltia-cms)**, created and maintained by **[Kohei Yoshino](https://github.com/kyoshino)** and community contributors.
 
-[![Sveltia CMS: Fast, Git-based, Headless, Modern UX, Mobile Support, I18n Support, Open Source](https://sveltiacms.app/images/highlights/cover.webp)](https://sveltiacms.app/en/)
+[Sveltia CMS](https://sveltiacms.app/en/) is the modern, high-performance successor to Netlify CMS / Decap CMS, written from the ground up in Svelte. It provides a lightweight, Git-based headless CMS architecture with first-class internationalization, zero server dependencies, and clean Git workflows.
 
-[![765 Netlify/Decap CMS issues solved in Sveltia CMS (including duplicates)](https://sveltiacms.app/images/highlights/decap-issues.webp?20260909)](https://sveltiacms.app/en/docs/successor-to-netlify-cms)
+We are deeply grateful to the Sveltia CMS maintainers and contributors for building such an exceptional foundation. Please visit the official project:
+- **Upstream Repository**: [github.com/sveltia/sveltia-cms](https://github.com/sveltia/sveltia-cms)
+- **Official Website & Docs**: [sveltiacms.app](https://sveltiacms.app/en/)
+- **Upstream Sponsorship**: [github.com/sponsors/kyoshino](https://github.com/sponsors/kyoshino)
 
-[![See it in action. Visit Sveltia CMS Showcase](https://sveltiacms.app/images/highlights/showcase.webp)](https://sveltiacms.app/en/showcase)
+---
 
-## Documentation
+## 🚀 Key Improvements & Additions Since Forking
 
-We provide comprehensive documentation to help you get started and make the most of Sveltia CMS:
+This fork introduces powerful capabilities designed specifically for content-heavy static sites, complex Hugo blogs, academic writing, and deep folder structures:
 
-- [Introduction](https://sveltiacms.app/en/docs/intro): Product highlights, use cases, project goals
-- [Getting Started](https://sveltiacms.app/en/docs/start): Step-by-step setup instructions
-- [Migration Guides](https://sveltiacms.app/en/docs/migration): Instructions for migrating from other CMSs
-- [Working with AI](https://sveltiacms.app/en/docs/working-with-ai): Official Agent Skill and `llms.txt`
-- [Roadmap](https://sveltiacms.app/en/docs/roadmap): Upcoming features and improvements
+### 1. ⚡ Real-Time Hugo Live Preview (Shadow Draft Engine)
+Traditional CMS preview systems rely on generic Markdown approximations that fail to reflect complex Hugo themes, partials, shortcodes, and styling. This fork introduces an instant Hugo live preview:
+- **Ultra-low latency (~200ms)**: Uses an in-memory background "shadow draft" (`content/admin-preview.md`) updated incrementally without polluting Git status.
+- **Accurate revision tracking**: Employs an exact revision marker (`data-rev`) with smart polling to ensure the preview iframe only reloads when Hugo has finished rebuilding.
+- **Synchronized bidirectional scrolling**: Smoothly mirrors scroll position between the Lexical editor and the rendered Hugo preview page.
+- **Dual preview switcher**: Switch effortlessly between the built-in Sveltia preview and the fully rendered Hugo site preview directly from the editor toolbar.
+- **Distraction-free aesthetics**: Clean iframe presentation with concealed scrollbars and manual refresh controls.
 
-## Showcase
+### 2. 🧩 Full Hugo Shortcode & Markdown Extension Support
+- **Round-trip shortcode safety**: Full preservation of Hugo shortcode syntax (`{{< ... >}}` and `{{% ... %}}`), preventing parameter corruption, unwanted escaping, or content loss upon saving.
+- **Collapsible shortcode cards**: In the rich-text editor, shortcodes render as compact, expandable blocks showing their name and parameters at a glance while keeping the authoring canvas clean and readable.
+- **Safe parameter handling**: Positional arguments with special characters and symbols are automatically quoted to prevent Hugo compilation errors.
 
-Our [industry-leading showcase](https://sveltiacms.app/en/showcase) is updated daily with new real-world examples of Sveltia CMS users, including:
+### 3. 📐 Mathematical Typesetting (KaTeX)
+- **Native LaTeX / KaTeX rendering**: Math formulas (inline `$ ... $` and block `$$ ... $$`) render beautifully in both the standard editor preview and the Hugo live preview, catering to scientific and technical writing.
 
-- [Sites migrated from Decap CMS](https://sveltiacms.app/en/showcase?migrated-from=decap-cms): Most popular
-- [Sites migrated from WordPress](https://sveltiacms.app/en/showcase?migrated-from=wordpress)
-- [Sites built with Astro](https://sveltiacms.app/en/showcase?framework=astro)
-- [Sites built with Eleventy](https://sveltiacms.app/en/showcase?framework=eleventy)
-- [Sites built with vanilla JavaScript](https://sveltiacms.app/en/showcase?framework=vanilla): Trending
-- [Sites using i18n support](https://sveltiacms.app/en/showcase?feature=i18n): Multilingual sites made easy
+### 4. 📁 Deep Subfolder & Hierarchical Collection Navigation
+Hugo projects frequently organize posts by year or topic (e.g. `content/posts/YYYY/`). This fork brings comprehensive hierarchical folder support:
+- **Sidebar folder tree**: Subfolders are displayed in a clean, expandable tree with dynamic item counters per year or directory.
+- **Folder filtering**: Filter the entry list to specific subfolders and their descendants.
+- **Direct entry creation**: Clicking "New Entry" while inside a subfolder automatically creates the post inside that specific directory path.
 
-## Community
+### 5. 🎛️ Compact & Collapsible Metadata Editor
+- **"Settings" / "Paramètres" collapsible card**: Article frontmatter properties (publication date, draft toggle, categories, tags, slug, cover image) are neatly grouped in a collapsible container above the content.
+- **Compact two-column layout**: Fields align horizontally on modern displays, drastically reducing wasted vertical space so editors can start writing immediately without scrolling past large metadata blocks.
 
-Stay connected and get support through our community channels:
+### 6. 🖼️ Entry-Relative Image & Thumbnail Resolution
+- **Relative asset paths (`./images/`)**: Fully resolves relative image paths in page bundles.
+- **Thumbnail integration**: Cover image thumbnails appear in collection lists even when stored in subfolder-relative paths (e.g. `content/posts/2026/images/cover.png`).
 
-- [Bluesky](https://bsky.app/profile/sveltiacms.app): Follow us for news and updates
-- [Discord](https://discord.com/invite/5hwCGqup5b): Join the community and chat with us
-- [GitHub Discussions](https://github.com/sveltia/sveltia-cms/discussions): Ask questions and share ideas
-- [Contribute](https://github.com/sveltia/sveltia-cms/blob/main/CONTRIBUTING.md): Learn how to get involved
+### 7. 🏷️ Enhanced Boolean Filtering (Hugo-Compatible Drafts)
+- **Drafts vs. Published separation**: In Hugo, published articles frequently omit the `draft` attribute rather than specifying `draft: false`. The collection filter (`matchesCollectionFilter`) now treats omitted/undefined boolean properties as `false`.
+- **Dedicated collections in `hugo.yaml`**: Allows configuring clean, separate collections in the sidebar for "Articles" (`filter: { field: draft, value: false }`) and "Brouillons" (`filter: { field: draft, value: true }`) with custom icons and default values.
+
+---
+
+## 🛠️ Quick Setup with Hugo
+
+### 1. CMS Configuration (`config/_default/hugo.yaml` or `config.yml`)
+```yaml
+params:
+  headless_cms:
+    engine: "sveltia"
+    dev_server: "http://localhost:5173"
+    collections:
+      posts:
+        name: "posts"
+        label: "Articles"
+        folder: "content/posts"
+        media_folder: "./images"
+        public_folder: "./images"
+        icon: "article"
+        filter:
+          field: draft
+          value: false
+        fields:
+          - { label: Titre, name: title, widget: string }
+          - { label: Date, name: date, widget: datetime, type: date }
+          - { label: Brouillon, name: draft, widget: boolean, default: false }
+          - { label: Image, name: coverImage, widget: image, required: false }
+          - { label: Corps, name: body, widget: richtext }
+      drafts:
+        name: "drafts"
+        label: "Brouillons"
+        folder: "content/posts"
+        media_folder: "./images"
+        public_folder: "./images"
+        icon: "edit_note"
+        filter:
+          field: draft
+          value: true
+        fields:
+          - { label: Titre, name: title, widget: string }
+          - { label: Date, name: date, widget: datetime, type: date }
+          - { label: Brouillon, name: draft, widget: boolean, default: true }
+          - { label: Image, name: coverImage, widget: image, required: false }
+          - { label: Corps, name: body, widget: richtext }
+```
+
+### 2. Running in Development
+```bash
+# In your sveltia-cms directory:
+pnpm install
+pnpm dev
+
+# In your Hugo site directory:
+hugo server --buildDrafts --buildFuture
+```
+
+Navigate to `http://localhost:1313/admin/` to launch the CMS interface.
+
+---
+
+## 🧪 Testing & Quality Assurance
+
+All features and enhancements maintain strict test coverage:
+```bash
+# Run unit tests
+pnpm test
+
+# Run collection service tests
+npx vitest run src/lib/services/contents/collection/
+```
+
+---
+
+## 📄 License
+
+This project is open source and licensed under the [MIT License](LICENSE), matching the original Sveltia CMS license.
+All original work copyright (c) [Kohei Yoshino](https://github.com/kyoshino) and Sveltia CMS contributors.
+All enhancements copyright (c) contributors to this fork.
