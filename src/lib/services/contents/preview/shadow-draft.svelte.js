@@ -117,7 +117,9 @@ class ShadowDraftService {
           const data = await res.json();
           if (data.enabled) {
             const previewUrl = data.previewUrl || this.previewUrl;
-            const hugoReady = await this.verifyHugoServer(previewUrl);
+            const hugoReady = typeof data.hugoRunning === 'boolean'
+              ? data.hugoRunning
+              : await this.verifyHugoServer(previewUrl);
             if (hugoReady) {
               this.#apiUrl = url;
               this.previewUrl = previewUrl;

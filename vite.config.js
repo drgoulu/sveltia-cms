@@ -565,11 +565,13 @@ build:
         }
 
         if (req.method === 'GET') {
+          initPreviewFile();
+
           let hugoRunning = false;
           try {
             hugoRunning = await new Promise((resolve) => {
               const checkReq = http.get('http://127.0.0.1:1313/admin-preview/', { timeout: 800 }, (checkRes) => {
-                resolve(checkRes.statusCode < 500);
+                resolve(checkRes.statusCode === 200);
               });
               checkReq.on('error', () => resolve(false));
               checkReq.on('timeout', () => {

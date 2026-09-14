@@ -44,6 +44,9 @@
   // right away, even while the strings for another locale are being fetched from the CDN
   initAppLocale();
 
+  const hasExistingConfigLink =
+    typeof document !== 'undefined' && !!document.querySelector('link[rel="cms-config-url"]');
+
   $effect.pre(() => {
     initUserEnvDetection();
   });
