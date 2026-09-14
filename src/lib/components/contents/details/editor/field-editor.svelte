@@ -63,6 +63,7 @@
    * @property {FieldContext} [context] Where the field is rendered.
    * @property {string} [componentName] Name of the parent rich text editor component, if any.
    * @property {DraftValueStoreKey} [valueStoreKey] Key to store the values in {@link EntryDraft}.
+   * @property {boolean} [compact] Whether to render in compact horizontal layout.
    */
 
   const entryDraft = getEntryDraftContext();
@@ -85,8 +86,12 @@
     context: fieldContext = parent.fieldContext ?? undefined,
     componentName,
     valueStoreKey = parent.valueStoreKey ?? 'currentValues',
+    compact = undefined,
     /* eslint-enable prefer-const */
   } = $props();
+
+  const isCompactContext = getContext('compact-fields') ?? false;
+  const isCompact = $derived(compact ?? isCompactContext);
 
   const fieldId = $props.id();
 
@@ -287,6 +292,7 @@
     data-key-path={keyPath}
     data-typed-key-path={typedKeyPath}
     hidden={fieldType === 'compute'}
+    compact={isCompact && !['richtext', 'markdown'].includes(fieldType)}
   >
     <header role="none">
       <h4 role="none" id="{fieldId}-label">{fieldLabel}</h4>
