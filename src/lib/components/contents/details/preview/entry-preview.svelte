@@ -91,6 +91,10 @@
 {:else}
   {#if shadowDraft.available}
     <div class="hugo-switch-bar">
+      <div class="status-indicator">
+        <span class="status-icon">📄</span>
+        <span class="status-text">Vue CMS standard</span>
+      </div>
       <button
         type="button"
         class="hugo-switch-btn"
@@ -123,11 +127,34 @@
   }
 
   .hugo-switch-bar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     padding: 6px 12px;
     background: #1e293b;
     border-bottom: 1px solid #334155;
+    font-size: 0.85rem;
+    color: #cbd5e1;
+  }
+
+  .status-indicator {
     display: flex;
-    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+  }
+
+  .status-icon {
+    font-size: 0.9rem;
+  }
+
+  .status-text {
+    color: #cbd5e1;
   }
 
   .hugo-switch-btn {
@@ -139,6 +166,7 @@
     font-size: 0.8rem;
     font-weight: 500;
     cursor: pointer;
+    transition: background 0.15s ease;
   }
 
   .hugo-switch-btn:hover {

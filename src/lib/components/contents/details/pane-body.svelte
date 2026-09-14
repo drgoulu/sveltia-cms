@@ -104,39 +104,7 @@
 
     const scrollRatio = scrollTop / thisMax;
 
-    // Check if standard view key-path matching is available
-    const isIframe = thisPaneContentArea !== contentArea;
-    const { x, y } = isIframe ? { x: 0, y: 0 } : thisPaneContentArea.getBoundingClientRect();
-    const ownerDoc = thisPaneContentArea.ownerDocument || document;
-    const thatHasKeyPaths = !!thatPaneContentArea.querySelector?.('[data-key-path]');
-
-    if (thatHasKeyPaths && ownerDoc.elementsFromPoint) {
-      const thisElement = /** @type {HTMLElement | undefined} */ (
-        ownerDoc.elementsFromPoint(x + 80, y).findLast((e) => e.matches('[data-key-path]'))
-      );
-
-      if (thisElement) {
-        const { keyPath } = thisElement.dataset;
-        const { top, height } = thisElement.getBoundingClientRect();
-        const ratio = (y - top) / height;
-
-        const thatElement = /** @type {HTMLElement | undefined} */ (
-          thatPaneContentArea.querySelector?.(`[data-key-path="${CSS.escape(keyPath ?? '')}"]`)
-        );
-
-        if (ratio >= 0 && ratio <= 1 && thatElement) {
-          isSyncing = true;
-          thatPaneContentArea.scrollTop = thatElement.offsetTop - y + thatElement.clientHeight * ratio;
-          window.requestAnimationFrame(() => {
-            isSyncing = false;
-          });
-
-          return;
-        }
-      }
-    }
-
-    // Proportional scroll for Hugo preview and general fallback
+    // Proportional scroll for both preview modes (Hugo live preview and standard CMS preview)
     isSyncing = true;
     thatPaneContentArea.scrollTop = Math.round(thatMax * scrollRatio);
     window.requestAnimationFrame(() => {
@@ -272,6 +240,20 @@
         detachListeners(thisPaneContentArea);
         thisPaneContentArea = contentArea;
         attachListeners(thisPaneContentArea);
+
+        // Restore scroll position to match the other pane
+        if (thatPaneContentArea) {
+          const thatMax = thatPaneContentArea.scrollHeight - thatPaneContentArea.clientHeight;
+
+          if (thatMax > 0) {
+            const ratio = thatPaneContentArea.scrollTop / thatMax;
+            const thisMax = contentArea.scrollHeight - contentArea.clientHeight;
+
+            if (thisMax > 0) {
+              contentArea.scrollTop = Math.round(thisMax * ratio);
+            }
+          }
+        }
       }
     });
 
