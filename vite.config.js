@@ -1,6 +1,7 @@
 import { exec } from 'child_process';
 import { existsSync, readdirSync, unlinkSync } from 'fs';
 import { appendFile, cp, mkdir, readFile, writeFile } from 'fs/promises';
+import http from 'http';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -564,9 +565,26 @@ build:
         }
 
         if (req.method === 'GET') {
+          let hugoRunning = false;
+          try {
+            hugoRunning = await new Promise((resolve) => {
+              const checkReq = http.get('http://127.0.0.1:1313/admin-preview/', { timeout: 800 }, (checkRes) => {
+                resolve(checkRes.statusCode < 500);
+              });
+              checkReq.on('error', () => resolve(false));
+              checkReq.on('timeout', () => {
+                checkReq.destroy();
+                resolve(false);
+              });
+            });
+          } catch {
+            hugoRunning = false;
+          }
+
           res.setHeader('Content-Type', 'application/json');
           return res.end(JSON.stringify({
-            enabled: existsSync(contentDir),
+            enabled: existsSync(contentDir) && hugoRunning,
+            hugoRunning,
             previewUrl: 'http://localhost:1313/admin-preview/',
           }));
         }

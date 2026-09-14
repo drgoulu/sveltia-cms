@@ -1,6 +1,7 @@
 <script>
   import { _ } from '@sveltia/i18n';
   import { VisibilityObserver } from '@sveltia/ui';
+  import { onMount } from 'svelte';
 
   import EntryPreviewIframe from '$lib/components/contents/details/preview/entry-preview-iframe.svelte';
   import FieldPreview from '$lib/components/contents/details/preview/field-preview.svelte';
@@ -54,6 +55,10 @@
   );
 
   const valueMap = $derived(getValueMapSnapshot(entryDraft.current, locale));
+
+  onMount(() => {
+    shadowDraft.checkAvailability();
+  });
 
   // Sync draft to Hugo shadow file whenever values change
   $effect(() => {

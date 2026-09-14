@@ -3,17 +3,40 @@ import { getValueMapSnapshot } from '$lib/services/contents/draft/value-map.svel
 import { formatFrontMatter } from '$lib/services/contents/file/format';
 
 /**
+ * Check if running in a local development environment.
+ * @returns {boolean}
+ */
+const isLocalhost = () => {
+  if (typeof window === 'undefined' || !window.location) {
+    return false;
+  }
+  const { hostname } = window.location;
+  return (
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname === '[::1]' ||
+    hostname.endsWith('.localhost') ||
+    hostname.endsWith('.local')
+  );
+};
+
+/**
  * Resolves candidate API endpoints for shadow draft preview.
  * When running in development, Sveltia CMS might be loaded as an ES module from the Vite dev server
  * (e.g. port 5173) while the host site / CMS admin page runs on Hugo (e.g. port 1313).
  * @returns {string[]}
  */
 const getCandidateApiUrls = () => {
+  if (!isLocalhost()) {
+    return [];
+  }
   const urls = [];
   try {
     if (import.meta?.url) {
       const origin = new URL(import.meta.url).origin;
-      urls.push(`${origin}/api/preview`);
+      if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+        urls.push(`${origin}/api/preview`);
+      }
     }
   } catch {
     // Ignore
@@ -56,9 +79,36 @@ class ShadowDraftService {
   }
 
   /**
-   * Check if the local Vite dev server /api/preview endpoint is available.
+   * Verify if the local Hugo server is actually running and responding.
+   * @param {string} url Preview URL to test.
+   * @returns {Promise<boolean>}
+   */
+  async verifyHugoServer(url) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => controller.abort(), 1200);
+      await fetch(`${url}?_ping=${Date.now()}`, {
+        method: 'GET',
+        mode: 'no-cors',
+        cache: 'no-store',
+        signal: controller.signal,
+      });
+      window.clearTimeout(timeoutId);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Check if the local Vite dev server and Hugo server are available.
    */
   async checkAvailability() {
+    if (!isLocalhost()) {
+      this.available = false;
+      return;
+    }
+
     const candidates = getCandidateApiUrls();
     for (const url of candidates) {
       try {
@@ -66,12 +116,14 @@ class ShadowDraftService {
         if (res.ok) {
           const data = await res.json();
           if (data.enabled) {
-            this.#apiUrl = url;
-            this.available = true;
-            if (data.previewUrl) {
-              this.previewUrl = data.previewUrl;
+            const previewUrl = data.previewUrl || this.previewUrl;
+            const hugoReady = await this.verifyHugoServer(previewUrl);
+            if (hugoReady) {
+              this.#apiUrl = url;
+              this.previewUrl = previewUrl;
+              this.available = true;
+              return;
             }
-            return;
           }
         }
       } catch {
