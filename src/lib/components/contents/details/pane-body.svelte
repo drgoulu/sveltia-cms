@@ -129,6 +129,9 @@
     });
   };
 
+  /** @type {AddEventListenerOptions} */
+  const eventOptions = { capture: true, passive: true };
+
   /**
    * Detach scroll and wheel listeners from a target element.
    * @param {HTMLElement | undefined | null} target Target element.
