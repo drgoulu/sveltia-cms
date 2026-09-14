@@ -1722,6 +1722,59 @@ describe('assets/index', () => {
       expect(createPath).toHaveBeenCalledWith(['src/content/entries', 'images', 'photo.jpg']);
     });
 
+    it('should strip prefix when media_folder starts with ./ (e.g. ./images)', async () => {
+      const { resolvePath, createPath } = await import('$lib/services/utils/file');
+
+      const mockAsset = {
+        path: 'content/posts/2004/images/photo.jpg',
+        name: 'photo.jpg',
+        sha: 'abc123',
+        size: 1024,
+        kind: /** @type {import('$lib/types/private').AssetKind} */ ('image'),
+        folder: {
+          internalPath: 'content/posts',
+          internalSubPath: 'images',
+          publicPath: './images',
+          collectionName: 'posts',
+          entryRelative: true,
+          hasTemplateTags: false,
+        },
+      };
+
+      const mockEntry = /** @type {any} */ ({
+        id: 'post-1',
+        slug: 'post-1',
+        locales: {
+          en: {
+            path: 'content/posts/2004/post-1.md',
+            sha: 'sha123',
+            slug: 'post-1',
+            content: { title: 'Post 1' },
+          },
+        },
+      });
+
+      const mockCollection = /** @type {any} */ ({
+        name: 'posts',
+        media_folder: './images',
+        public_folder: './images',
+        _i18n: { defaultLocale: 'en' },
+      });
+
+      vi.mocked(createPath).mockReturnValue('content/posts/2004/images/photo.jpg');
+      vi.mocked(resolvePath).mockReturnValue('content/posts/2004/images/photo.jpg');
+      allAssets.current = [mockAsset];
+
+      const result = getAssetByRelativePathAndCollection({
+        path: './images/photo.jpg',
+        entry: mockEntry,
+        collection: mockCollection,
+      });
+
+      expect(result).toEqual(mockAsset);
+      expect(createPath).toHaveBeenCalledWith(['content/posts/2004', 'images', 'photo.jpg']);
+    });
+
     it('should not strip path prefix when media_folder is undefined', async () => {
       // When collection has no media_folder, the path must be passed through unchanged
       const { resolvePath, createPath } = await import('$lib/services/utils/file');

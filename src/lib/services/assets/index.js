@@ -325,17 +325,15 @@ export const getAssetByRelativePathAndCollection = ({
     /** @type {RegExpMatchArray} */ (entryFilePath.match(ENTRY_FOLDER_REGEX)).groups
   );
 
-  // Strip the `media_folder` prefix from the stored path before joining with `mediaFolder`, to
-  // avoid duplication when the stored value already includes the media folder (e.g.
-  // `images/photo.jpg`). Also normalize `./` prefix since `./images/photo.jpg` and
-  // `images/photo.jpg` are equivalent relative paths.
+  // Strip the `media_folder` or `public_folder` prefix from the stored path before joining with
+  // `mediaFolder`, to avoid duplication when the stored value already includes the media folder
+  // (e.g. `images/photo.jpg` or `./images/photo.jpg`). Also normalize `./` prefix since
+  // `./images/photo.jpg` and `images/photo.jpg` are equivalent relative paths.
   const normalizedPath = path.replace(/^\.\//, '');
+  const normalizedMediaFolder = mediaFolder?.replace(/^\.\//, '');
+  const normalizedPublicFolder = publicFolder?.replace(/^\.\//, '');
 
-  let localPath =
-    mediaFolder && normalizedPath.startsWith(`${mediaFolder}/`)
-      ? normalizedPath.slice(mediaFolder.length + 1)
-      : normalizedPath;
-
+  let localPath = normalizedPath;
   let resolvedPath;
 
   // When `media_folder` is absolute (starts with `/`) and `public_folder` is entry-relative (e.g.
@@ -344,11 +342,8 @@ export const getAssetByRelativePathAndCollection = ({
   // Strip the `public_folder` prefix from the stored value and resolve directly against the
   // absolute `media_folder`, bypassing `entryFolder` concatenation.
   if (mediaFolder?.startsWith('/') && publicFolder) {
-    // Normalize `public_folder` by removing leading `./`
-    const normalizedPublicFolder = publicFolder.replace(/^\.\//, '');
-
     // Check if the stored path starts with the public folder
-    if (normalizedPath.startsWith(`${normalizedPublicFolder}/`)) {
+    if (normalizedPublicFolder && normalizedPath.startsWith(`${normalizedPublicFolder}/`)) {
       // Strip the public folder prefix to get just the filename/subpath
       localPath = normalizedPath.slice(normalizedPublicFolder.length + 1);
     }
@@ -356,8 +351,15 @@ export const getAssetByRelativePathAndCollection = ({
     // Resolve against the absolute media_folder (strip leading `/` to make it repo-relative)
     resolvedPath = resolvePath(createPath([mediaFolder.slice(1), localPath]));
   } else {
+    // Strip public_folder or media_folder prefix if present in the stored path
+    if (normalizedPublicFolder && normalizedPath.startsWith(`${normalizedPublicFolder}/`)) {
+      localPath = normalizedPath.slice(normalizedPublicFolder.length + 1);
+    } else if (normalizedMediaFolder && normalizedPath.startsWith(`${normalizedMediaFolder}/`)) {
+      localPath = normalizedPath.slice(normalizedMediaFolder.length + 1);
+    }
+
     // Original logic: concatenate entryFolder + mediaFolder + localPath for entry-relative folders
-    resolvedPath = resolvePath(createPath([entryFolder, mediaFolder, localPath]));
+    resolvedPath = resolvePath(createPath([entryFolder, normalizedMediaFolder, localPath]));
   }
 
   return getAssetPathMap().get(resolvedPath);
