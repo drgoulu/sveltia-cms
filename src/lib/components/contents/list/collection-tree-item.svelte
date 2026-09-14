@@ -9,8 +9,7 @@
   import { getEntriesByCollection } from '$lib/services/contents/collection/entries';
   import { nestedFilterPath } from '$lib/services/contents/collection/nested';
   import { getNestedTree } from '$lib/services/contents/collection/nested/tree';
-  import { currentView } from '$lib/services/contents/collection/view';
-  import { entryListSettings } from '$lib/services/contents/collection/view/settings';
+  import { currentView, entryListSettings } from '$lib/services/contents/collection/view/settings';
   import { env } from '$lib/services/user/env.svelte';
   import { mergeUnpublishedEntries, unpublishedEntries } from '$lib/services/workflow';
 

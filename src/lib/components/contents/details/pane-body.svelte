@@ -52,86 +52,9 @@
   /** @type {HTMLIFrameElement | null} */
   let trackedIframe = null;
 
-<<<<<<< HEAD
   let isSyncing = false;
   /** @type {number | null} */
   let rafId = null;
-=======
-  /**
-   * Sync the scroll position with the other edit/preview pane.
-   */
-  const syncScrollPosition = () => {
-    window.requestAnimationFrame(() => {
-      if (!syncScrolling || !contentArea || !thisPaneContentArea || !thatPaneContentArea) {
-        return;
-      }
-
-      const isIframe = thisPaneContentArea !== contentArea;
-      const { x, y } = isIframe ? { x: 0, y: 0 } : thisPaneContentArea.getBoundingClientRect();
-      const { ownerDocument, scrollTop, scrollHeight, clientHeight } = thisPaneContentArea;
-      const scrollTopMax = scrollHeight - clientHeight;
-      const scrollRatio = scrollTop / scrollTopMax;
-
-      // Find the field section in the top left corner of the content area. Use `findLast` to
-      // capture the topmost element; otherwise the List field sticky headers will interfere with
-      // the positioning.
-      // @see https://github.com/sveltia/sveltia-cms/issues/883
-      const thisElement = /** @type {HTMLElement | undefined} */ (
-        ownerDocument.elementsFromPoint(x + 80, y).findLast((e) => e.matches('[data-key-path]'))
-      );
-
-      if (!thisElement) {
-        // Calculate the scroll position based on the current scroll position of the this pane
-        thatPaneContentArea.scrollTop = thatPaneContentArea.scrollHeight * scrollRatio;
-
-        return;
-      }
-
-      // The element was found by that very attribute, so the key path is there
-      const { keyPath } = /** @type {{ keyPath: string }} */ (thisElement.dataset);
-      const { top, height } = thisElement.getBoundingClientRect();
-      const ratio = (y - top) / height;
-
-      const thatElement = /** @type {HTMLElement | undefined} */ (
-        thatPaneContentArea.querySelector(`[data-key-path="${CSS.escape(keyPath)}"]`)
-      );
-
-      if (ratio < 0 || ratio > 1 || !thatElement) {
-        return;
-      }
-
-      // Scroll the other pane to the corresponding element, adjusting for the current scroll
-      // position and the ratio of the scroll position within the element.
-      thatPaneContentArea.scrollTop = thatElement.offsetTop - y + thatElement.clientHeight * ratio;
-    });
-  };
->>>>>>> upstream/main
-
-  /** @type {AddEventListenerOptions} */
-  const eventOptions = { capture: true, passive: true };
-  /** Counter to ignore an outdated initialization once a newer one has started. */
-  let initCount = 0;
-
-  /**
-   * Find the preview iframe, which is used in the preview mode only when a custom preview
-   * stylesheet or template is provided. The preview is rendered lazily once it’s visible, so the
-   * iframe may not be in the DOM yet when the pane mode changes.
-   * @returns {Promise<HTMLIFrameElement | null>} Iframe, if any.
-   */
-  const findPreviewIframe = async () => {
-    for (let i = 0; i < 10; i += 1) {
-      const iframe = contentArea?.querySelector('iframe.preview');
-
-      if (iframe) {
-        return /** @type {HTMLIFrameElement} */ (iframe);
-      }
-
-      // eslint-disable-next-line no-await-in-loop
-      await sleep(50);
-    }
-
-    return null;
-  };
 
   /**
    * Hide scrollbar inside an iframe document so only one vertical scrollbar is visible.
