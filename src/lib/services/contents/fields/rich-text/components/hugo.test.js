@@ -6,6 +6,7 @@ import {
   formatHugoArgs,
   HUGO_ALTMETRIC_COMPONENT,
   HUGO_COMPONENT_NAMES,
+  HUGO_DAILYMOTION_COMPONENT,
   HUGO_FIGURE_COMPONENT,
   HUGO_GENERIC_COMPONENT,
   HUGO_GIST_COMPONENT,
@@ -81,12 +82,13 @@ describe('hugo shortcodes utilities', () => {
 });
 
 describe('hugo components definitions', () => {
-  it('exports all 8 components', () => {
-    expect(ALL_HUGO_COMPONENTS).toHaveLength(8);
+  it('exports all 9 components', () => {
+    expect(ALL_HUGO_COMPONENTS).toHaveLength(9);
     expect(HUGO_COMPONENT_NAMES).toEqual([
       'hugo-figure',
       'hugo-youtube',
       'hugo-vimeo',
+      'hugo-dailymotion',
       'hugo-openbook',
       'hugo-altmetric',
       'hugo-gist',
@@ -143,6 +145,28 @@ describe('hugo components definitions', () => {
       const props = HUGO_VIMEO_COMPONENT.fromBlock(match);
       const preview = HUGO_VIMEO_COMPONENT.toPreview(props);
       expect(preview).toContain('player.vimeo.com/video/12345678');
+    });
+  });
+
+  describe('hugo-dailymotion', () => {
+    const input = '{{< dailymotion "x8m4abc" >}}';
+
+    it('matches and previews dailymotion', () => {
+      const match = input.match(HUGO_DAILYMOTION_COMPONENT.pattern);
+      expect(match).not.toBeNull();
+
+      const props = HUGO_DAILYMOTION_COMPONENT.fromBlock(match);
+      expect(props._primary).toBe('x8m4abc');
+
+      const preview = HUGO_DAILYMOTION_COMPONENT.toPreview(props);
+      expect(preview).toContain('dailymotion.com/embed/video/x8m4abc');
+      expect(HUGO_DAILYMOTION_COMPONENT.toBlock({ id: 'x8m4abc' })).toBe('{{< dailymotion "x8m4abc" >}}');
+    });
+
+    it('extracts ID from full dailymotion URL', () => {
+      const preview = HUGO_DAILYMOTION_COMPONENT.toPreview({ id: 'https://www.dailymotion.com/video/x9xyz12' });
+      expect(preview).toContain('dailymotion.com/embed/video/x9xyz12');
+      expect(HUGO_DAILYMOTION_COMPONENT.toBlock({ id: 'https://dai.ly/x9xyz12' })).toBe('{{< dailymotion "x9xyz12" >}}');
     });
   });
 

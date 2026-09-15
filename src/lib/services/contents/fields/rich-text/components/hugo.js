@@ -258,6 +258,51 @@ export const HUGO_VIMEO_COMPONENT = {
 };
 
 /**
+ * Extract Dailymotion video ID from an ID, path, or URL.
+ * @param {any} input ID or URL.
+ * @returns {string} Clean ID.
+ */
+const extractDailymotionId = (input) => {
+  const str = String(input ?? '').trim();
+  const urlMatch = str.match(/(?:dailymotion\.com\/(?:video|embed\/video)\/|dai\.ly\/)([a-zA-Z0-9]+)/);
+
+  if (urlMatch) return urlMatch[1];
+
+  return str.replace(/^\/?(?:embed\/video\/)?/, '').split(/[?_]/)[0];
+};
+
+/**
+ * Hugo Dailymotion shortcode component definition.
+ * Supports {{< dailymotion id >}} or {{< dailymotion id="..." >}}
+ * @type {EditorComponentDefinition}
+ */
+export const HUGO_DAILYMOTION_COMPONENT = {
+  id: 'hugo-dailymotion',
+  label: 'Dailymotion (Hugo)',
+  collapsed: true,
+  pattern: /{{[<%]\s*dailymotion\s+([^>%]+?)\s*[>%]}}/,
+  fromBlock: (match) => parseHugoArgs(match[1]),
+  toBlock: (obj) => {
+    const raw = obj.id || obj._primary || '';
+    const id = extractDailymotionId(raw);
+
+    return `{{< dailymotion "${String(id).replaceAll('"', '\\"')}" >}}`;
+  },
+  toPreview: (obj) => {
+    const raw = obj.id || obj._primary || '';
+    const id = extractDailymotionId(raw);
+
+    return (
+      '<div style="position:relative;width:100%;padding-bottom:56.25%;height:0;overflow:hidden;margin:1.2em 0;border-radius:8px;background:#000;">' +
+      `<iframe src="https://www.dailymotion.com/embed/video/${escapeHtml(id)}" ` +
+      'style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;" allowfullscreen></iframe>' +
+      '</div>'
+    );
+  },
+  fields: [{ label: 'ID Dailymotion ou URL', name: 'id', widget: 'string' }],
+};
+
+/**
  * Hugo OpenBook shortcode component definition (openbook4hugo module).
  * Supports {{< openbook "isbn" >}}
  * @type {EditorComponentDefinition}
@@ -423,7 +468,7 @@ export const HUGO_GENERIC_COMPONENT = {
   collapsed: true,
   trigger: 'none',
   pattern:
-    /{{[<%]\s*(?!(?:\/|highlight|figure|youtube|vimeo|openbook|altmetric|gist)\b)([a-zA-Z0-9_-]+)(?:\s+([^>%]*?))?\s*[>%]}/,
+    /{{[<%]\s*(?!(?:\/|highlight|figure|youtube|vimeo|dailymotion|openbook|altmetric|gist)\b)([a-zA-Z0-9_-]+)(?:\s+([^>%]*?))?\s*[>%]}/,
   fromBlock: (match) => ({
     name: match[1],
     args: match[2] || '',
@@ -473,6 +518,7 @@ export const ALL_HUGO_COMPONENTS = [
   HUGO_FIGURE_COMPONENT,
   HUGO_YOUTUBE_COMPONENT,
   HUGO_VIMEO_COMPONENT,
+  HUGO_DAILYMOTION_COMPONENT,
   HUGO_OPENBOOK_COMPONENT,
   HUGO_ALTMETRIC_COMPONENT,
   HUGO_GIST_COMPONENT,
