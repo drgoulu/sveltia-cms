@@ -1,8 +1,5 @@
 <script module>
-  /** @type {HTMLElement | null} */
-  let activeScroller = null;
-  /** @type {ReturnType<typeof setTimeout> | null} */
-  let clearActiveScrollerTimeout = null;
+  let isSyncingScroll = false;
 </script>
 
 <script>
@@ -83,37 +80,26 @@
     const targetTop = Math.round(thatMax * scrollRatio);
 
     if (Math.abs(thatPaneContentArea.scrollTop - targetTop) >= 1) {
+      isSyncingScroll = true;
       thatPaneContentArea.scrollTop = targetTop;
+      requestAnimationFrame(() => {
+        isSyncingScroll = false;
+      });
     }
-  };
-
-  /**
-   * Claim this pane as the active scroller during direct user interaction.
-   */
-  const onDirectInteraction = () => {
-    activeScroller = thisPaneContentArea ?? null;
-    if (clearActiveScrollerTimeout) {
-      clearTimeout(clearActiveScrollerTimeout);
-    }
-    clearActiveScrollerTimeout = setTimeout(() => {
-      activeScroller = null;
-    }, 150);
   };
 
   /**
    * Throttled scroll listener handler.
+   * @param {Event} [event]
    */
-  const onScrollTrigger = () => {
-    if (!syncScrolling || !thisPaneContentArea || !thatPaneContentArea) {
+  const onScrollTrigger = (event) => {
+    if (isSyncingScroll || !syncScrolling || !thisPaneContentArea || !thatPaneContentArea) {
       return;
     }
 
-    // If another pane is currently driving the scroll, ignore programmatic echo
-    if (activeScroller && activeScroller !== thisPaneContentArea) {
+    if (event?.target && event.target !== thisPaneContentArea) {
       return;
     }
-
-    onDirectInteraction();
 
     if (rafId) {
       cancelAnimationFrame(rafId);
@@ -125,20 +111,15 @@
     });
   };
 
-  /** @type {AddEventListenerOptions} */
-  const eventOptions = { capture: true, passive: true };
-
   /**
    * Detach scroll and interaction listeners from a target element.
    * @param {HTMLElement | undefined | null} target Target element.
    */
   const detachListeners = (target) => {
     if (!target) return;
-    target.removeEventListener('wheel', onDirectInteraction, eventOptions);
-    target.removeEventListener('touchmove', onDirectInteraction, eventOptions);
-    target.removeEventListener('pointerdown', onDirectInteraction, eventOptions);
-    target.removeEventListener('scroll', onScrollTrigger, eventOptions);
-    target.ownerDocument?.defaultView?.removeEventListener('scroll', onScrollTrigger, eventOptions);
+    target.removeEventListener('wheel', onScrollTrigger);
+    target.removeEventListener('touchmove', onScrollTrigger);
+    target.removeEventListener('scroll', onScrollTrigger);
   };
 
   /**
@@ -147,11 +128,9 @@
    */
   const attachListeners = (target) => {
     if (!target) return;
-    target.addEventListener('wheel', onDirectInteraction, eventOptions);
-    target.addEventListener('touchmove', onDirectInteraction, eventOptions);
-    target.addEventListener('pointerdown', onDirectInteraction, eventOptions);
-    target.addEventListener('scroll', onScrollTrigger, eventOptions);
-    target.ownerDocument?.defaultView?.addEventListener('scroll', onScrollTrigger, eventOptions);
+    target.addEventListener('wheel', onScrollTrigger, { passive: true });
+    target.addEventListener('touchmove', onScrollTrigger, { passive: true });
+    target.addEventListener('scroll', onScrollTrigger, { passive: true });
   };
 
   /**
@@ -263,13 +242,6 @@
 
     if (rafId) {
       cancelAnimationFrame(rafId);
-    }
-
-    if (activeScroller === thisPaneContentArea) {
-      activeScroller = null;
-    }
-    if (clearActiveScrollerTimeout) {
-      clearTimeout(clearActiveScrollerTimeout);
     }
 
     detachListeners(thisPaneContentArea);
