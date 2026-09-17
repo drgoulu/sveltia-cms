@@ -1,3 +1,10 @@
+<script module>
+  /** @type {HTMLElement | null} */
+  let activeScroller = null;
+  /** @type {ReturnType<typeof setTimeout> | null} */
+  let clearActiveScrollerTimeout = null;
+</script>
+
 <script>
   import { _ } from '@sveltia/i18n';
   import { Button, EmptyState } from '@sveltia/ui';
@@ -52,37 +59,8 @@
   /** @type {HTMLIFrameElement | null} */
   let trackedIframe = null;
 
-  let isSyncing = false;
   /** @type {number | null} */
   let rafId = null;
-
-  /**
-   * Hide scrollbar inside an iframe document so only one vertical scrollbar is visible.
-   * @param {Document | undefined | null} doc Target document.
-   */
-  const hideIframeScrollbar = (doc) => {
-    try {
-      if (doc && !doc.getElementById('sveltia-hide-scrollbar')) {
-        const style = doc.createElement('style');
-
-        style.id = 'sveltia-hide-scrollbar';
-        style.textContent = `
-          html, body {
-            scrollbar-width: none !important;
-            -ms-overflow-style: none !important;
-          }
-          html::-webkit-scrollbar, body::-webkit-scrollbar {
-            display: none !important;
-            width: 0 !important;
-            height: 0 !important;
-          }
-        `;
-        (doc.head || doc.documentElement)?.appendChild(style);
-      }
-    } catch {
-      // Ignore potential cross-origin error
-    }
-  };
 
   /**
    * Sync the scroll position with the other edit/preview pane.
@@ -102,22 +80,40 @@
     if (thatMax <= 0) return;
 
     const scrollRatio = scrollTop / thisMax;
+    const targetTop = Math.round(thatMax * scrollRatio);
 
-    // Proportional scroll for both preview modes (Hugo live preview and standard CMS preview)
-    isSyncing = true;
-    thatPaneContentArea.scrollTop = Math.round(thatMax * scrollRatio);
-    window.requestAnimationFrame(() => {
-      isSyncing = false;
-    });
+    if (Math.abs(thatPaneContentArea.scrollTop - targetTop) >= 1) {
+      thatPaneContentArea.scrollTop = targetTop;
+    }
+  };
+
+  /**
+   * Claim this pane as the active scroller during direct user interaction.
+   */
+  const onDirectInteraction = () => {
+    activeScroller = thisPaneContentArea ?? null;
+    if (clearActiveScrollerTimeout) {
+      clearTimeout(clearActiveScrollerTimeout);
+    }
+    clearActiveScrollerTimeout = setTimeout(() => {
+      activeScroller = null;
+    }, 150);
   };
 
   /**
    * Throttled scroll listener handler.
    */
   const onScrollTrigger = () => {
-    if (isSyncing || !syncScrolling || !thisPaneContentArea || !thatPaneContentArea) {
+    if (!syncScrolling || !thisPaneContentArea || !thatPaneContentArea) {
       return;
     }
+
+    // If another pane is currently driving the scroll, ignore programmatic echo
+    if (activeScroller && activeScroller !== thisPaneContentArea) {
+      return;
+    }
+
+    onDirectInteraction();
 
     if (rafId) {
       cancelAnimationFrame(rafId);
@@ -133,25 +129,27 @@
   const eventOptions = { capture: true, passive: true };
 
   /**
-   * Detach scroll and wheel listeners from a target element.
+   * Detach scroll and interaction listeners from a target element.
    * @param {HTMLElement | undefined | null} target Target element.
    */
   const detachListeners = (target) => {
     if (!target) return;
-    target.removeEventListener('wheel', onScrollTrigger, eventOptions);
-    target.removeEventListener('touchmove', onScrollTrigger, eventOptions);
+    target.removeEventListener('wheel', onDirectInteraction, eventOptions);
+    target.removeEventListener('touchmove', onDirectInteraction, eventOptions);
+    target.removeEventListener('pointerdown', onDirectInteraction, eventOptions);
     target.removeEventListener('scroll', onScrollTrigger, eventOptions);
     target.ownerDocument?.defaultView?.removeEventListener('scroll', onScrollTrigger, eventOptions);
   };
 
   /**
-   * Attach scroll and wheel listeners to a target element.
+   * Attach scroll and interaction listeners to a target element.
    * @param {HTMLElement | undefined | null} target Target element.
    */
   const attachListeners = (target) => {
     if (!target) return;
-    target.addEventListener('wheel', onScrollTrigger, eventOptions);
-    target.addEventListener('touchmove', onScrollTrigger, eventOptions);
+    target.addEventListener('wheel', onDirectInteraction, eventOptions);
+    target.addEventListener('touchmove', onDirectInteraction, eventOptions);
+    target.addEventListener('pointerdown', onDirectInteraction, eventOptions);
     target.addEventListener('scroll', onScrollTrigger, eventOptions);
     target.ownerDocument?.defaultView?.addEventListener('scroll', onScrollTrigger, eventOptions);
   };
@@ -168,8 +166,6 @@
         const doc = iframe.contentDocument;
 
         if (!doc) return;
-
-        hideIframeScrollbar(doc);
 
         const scrollEl = doc.scrollingElement || doc.documentElement || doc.body;
 
@@ -269,6 +265,13 @@
       cancelAnimationFrame(rafId);
     }
 
+    if (activeScroller === thisPaneContentArea) {
+      activeScroller = null;
+    }
+    if (clearActiveScrollerTimeout) {
+      clearTimeout(clearActiveScrollerTimeout);
+    }
+
     detachListeners(thisPaneContentArea);
   });
 
@@ -282,12 +285,7 @@
 
 <div role="none" {id} class="wrapper">
   {#if locale && entryDraft.current?.currentLocales[locale]}
-    <div
-      role="none"
-      class="content"
-      class:hide-scrollbar={mode === 'preview' && !!thatPaneContentArea}
-      bind:this={contentArea}
-    >
+    <div role="none" class="content" bind:this={contentArea}>
       <MainContent {locale} />
     </div>
   {:else if mode === 'edit'}
@@ -323,17 +321,6 @@
 
     @media (width < 768px) {
       --field-editor-padding: 12px;
-    }
-
-    &.hide-scrollbar {
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-
-      &::-webkit-scrollbar {
-        display: none;
-        width: 0;
-        height: 0;
-      }
     }
   }
 </style>
