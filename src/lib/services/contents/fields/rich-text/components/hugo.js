@@ -101,6 +101,12 @@ export const resolveHugoImagePath = (src) => {
 
   if (typeof window !== 'undefined' && window.location?.hash) {
     const { hash } = window.location;
+    const colMatch = hash.match(/\/collections\/([^/]+)/);
+    let collection = colMatch?.[1] || 'posts';
+    if (collection === 'drafts') {
+      collection = 'posts';
+    }
+
     const match = hash.match(/\/entries\/(.+)$/);
 
     if (match) {
@@ -109,7 +115,7 @@ export const resolveHugoImagePath = (src) => {
         entryPath.match(/^(\d{4})\//) || entryPath.match(/(?:^|\/)(\d{4})-\d{2}-\d{2}/);
 
       if (yearMatch) {
-        return `/posts/${yearMatch[1]}/${clean}`;
+        return `/${collection}/${yearMatch[1]}/${clean}`;
       }
 
       const segments = entryPath.split('/');
@@ -117,9 +123,11 @@ export const resolveHugoImagePath = (src) => {
       if (segments.length > 1) {
         segments.pop();
 
-        return `/posts/${segments.join('/')}/${clean}`;
+        return `/${collection}/${segments.join('/')}/${clean}`;
       }
     }
+
+    return `/${collection}/${clean}`;
   }
 
   return `/posts/${clean}`;

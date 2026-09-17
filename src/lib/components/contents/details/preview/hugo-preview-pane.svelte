@@ -6,36 +6,50 @@
 
   /**
    * @typedef {object} Props
+   * @property {string | undefined} [draftId] Unique ID of the active draft.
    * @property {() => void} onSwitchToStandard Callback to switch back to classic CMS preview.
    */
 
   /** @type {Props} */
-  let { onSwitchToStandard } = $props();
+  let { draftId = undefined, onSwitchToStandard } = $props();
 
   /** @type {'desktop' | 'tablet' | 'mobile'} */
   let viewport = $state('desktop');
   let iframeKey = $state(0);
   /** @type {HTMLIFrameElement | undefined} */
   let iframeElement = $state();
-  let iframeSrc = $state(shadowDraft.previewUrl);
-  let compiling = $state(false);
+  let iframeSrc = $state('about:blank');
+  let compiling = $state(true);
+  let previousDraftId = $state(/** @type {string | undefined} */ (undefined));
+
+  // When changing edited document: immediately clear preview display to avoid showing previous document
+  $effect(() => {
+    if (draftId !== previousDraftId) {
+      compiling = true;
+      iframeSrc = 'about:blank';
+      iframeKey += 1;
+      previousDraftId = draftId;
+    }
+  });
 
   const reloadIframe = () => {
     iframeKey += 1;
     iframeSrc = `${shadowDraft.previewUrl}?_t=${Date.now()}`;
   };
 
-  // When shadow draft confirms a sync, refresh iframe once Hugo has rebuilt
+  // When shadow draft confirms a sync for this draft, refresh iframe once Hugo has rebuilt this revision
   $effect(() => {
     const syncTime = shadowDraft.lastSync;
     const targetRev = shadowDraft.currentRevision;
-    if (syncTime > 0) {
+    const trackedDraft = shadowDraft.currentDraftId;
+
+    // Only proceed if a sync has been completed for the current draft with a valid revision
+    if (syncTime > 0 && targetRev > 0 && (!draftId || trackedDraft === draftId)) {
       compiling = true;
       let cancelled = false;
 
       const refresh = async () => {
-        // Poll for exact revision with fast 100ms intervals
-        const maxAttempts = 50;
+        const maxAttempts = 60;
         for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
           if (cancelled) return;
           try {
@@ -45,7 +59,6 @@
             if (res.ok) {
               const html = await res.text();
               const hasRev =
-                !targetRev ||
                 html.includes(`data-rev="${targetRev}"`) ||
                 html.includes(`data-rev=${targetRev}`) ||
                 html.includes(String(targetRev));
@@ -60,12 +73,13 @@
               }
             }
           } catch {
-            // Keep waiting while server is compiling
+            // Keep waiting while Hugo rebuilds
           }
           await new Promise((resolve) => setTimeout(resolve, 100));
         }
 
-        if (!cancelled) {
+        // If polling timed out, allow manual retry rather than forcing stale content
+        if (!cancelled && compiling) {
           iframeKey += 1;
           iframeSrc = `${shadowDraft.previewUrl}?_t=${Date.now()}`;
           compiling = false;
@@ -144,12 +158,19 @@
   </div>
 
   <div class="iframe-wrapper viewport-{viewport}">
+    {#if compiling || !iframeSrc || iframeSrc === 'about:blank'}
+      <div class="loading-state">
+        <span class="loading-spinner"></span>
+        <span class="loading-message">Génération de l’aperçu Hugo…</span>
+      </div>
+    {/if}
     {#key iframeKey}
       <iframe
         bind:this={iframeElement}
         src={iframeSrc}
         title="Aperçu Hugo du brouillon"
         class="hugo-preview-iframe"
+        class:hidden={compiling || !iframeSrc || iframeSrc === 'about:blank'}
       ></iframe>
     {/key}
   </div>
@@ -265,6 +286,7 @@
   }
 
   .iframe-wrapper {
+    position: relative;
     flex: 1;
     display: flex;
     justify-content: center;
@@ -273,12 +295,42 @@
     background: #090d16;
   }
 
+  .loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    width: 100%;
+    height: 100%;
+    color: #94a3b8;
+    font-size: 0.95rem;
+    background: #090d16;
+  }
+
+  .loading-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid #1e293b;
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
   .hugo-preview-iframe {
     width: 100%;
     height: 100%;
     border: none;
     background: #ffffff;
     transition: width 0.2s ease-in-out;
+  }
+
+  .hugo-preview-iframe.hidden {
+    display: none;
   }
 
   .viewport-desktop .hugo-preview-iframe {

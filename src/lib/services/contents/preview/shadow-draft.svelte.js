@@ -65,6 +65,9 @@ class ShadowDraftService {
   /** @type {number} Current revision ID to verify rendered Hugo output */
   currentRevision = $state(0);
 
+  /** @type {string} ID of the currently tracked draft */
+  currentDraftId = $state('');
+
   /** @type {string} Resolved API URL for preview endpoints */
   #apiUrl = '';
 
@@ -136,19 +139,71 @@ class ShadowDraftService {
   }
 
   /**
-   * Schedule a sync of the current entry draft to the Hugo shadow draft.
-   * Debounced by 300ms to keep Hugo recompilation lightweight.
-   * @param {import('$lib/types/private').EntryDraft} draft Current draft.
-   * @param {string} locale Current active locale.
-   * @param {import('$lib/types/private').FlattenedEntryContent} [valueMap] Latest field values.
+   * Force an immediate sync of the given entry draft to Hugo shadow preview file.
+   * Resets old revision and cached content to guarantee that Hugo receives the new document right away.
+   * @param {import('$lib/types/private').EntryDraft} draft Entry draft being edited.
+   * @param {string} [locale] Active locale.
    */
-  scheduleSync(draft, locale, valueMap) {
-    if (!this.available || !draft || !draft.collection) {
+  async forceSync(draft, locale) {
+    if (!draft || !draft.collection) {
       return;
     }
 
     if (this.#timer) {
       clearTimeout(this.#timer);
+      this.#timer = undefined;
+    }
+
+    const draftId = draft.id || '';
+    this.currentDraftId = draftId;
+    this.#lastSentContent = '';
+    const revision = Date.now();
+    this.currentRevision = revision;
+    this.lastSync = 0; // Signals pending rebuild for this draft
+
+    if (!this.available || !this.#apiUrl) {
+      await this.checkAvailability();
+    }
+
+    if (!this.#apiUrl && isLocalhost()) {
+      this.#apiUrl = 'http://localhost:5173/api/preview';
+      this.available = true;
+    }
+
+    await this.#performSync(draft, locale || draft.defaultLocale, undefined, revision);
+  }
+
+  /**
+   * Schedule a sync of the current entry draft to the Hugo shadow draft.
+   * Debounced by 200ms to keep Hugo recompilation lightweight.
+   * @param {import('$lib/types/private').EntryDraft} draft Current draft.
+   * @param {string} locale Current active locale.
+   * @param {import('$lib/types/private').FlattenedEntryContent} [valueMap] Latest field values.
+   * @param {boolean} [isNewDraft] Whether switching to a new draft.
+   */
+  scheduleSync(draft, locale, valueMap, isNewDraft = false) {
+    if (!draft || !draft.collection) {
+      return;
+    }
+
+    const draftId = draft.id || '';
+    if (isNewDraft || (draftId && draftId !== this.currentDraftId)) {
+      this.forceSync(draft, locale);
+      return;
+    }
+
+    if (this.#timer) {
+      clearTimeout(this.#timer);
+      this.#timer = undefined;
+    }
+
+    if (!this.available) {
+      this.checkAvailability().then(() => {
+        if (this.available) {
+          this.#performSync(draft, locale, valueMap);
+        }
+      });
+      return;
     }
 
     this.#timer = window.setTimeout(() => {
@@ -156,16 +211,14 @@ class ShadowDraftService {
     }, 200);
   }
 
-  /**
-   * Immediately perform synchronization with Hugo.
-   * @param {import('$lib/types/private').EntryDraft} draft
-   * @param {string} locale
-   * @param {import('$lib/types/private').FlattenedEntryContent} [valueMap]
-   */
-  async #performSync(draft, locale, valueMap) {
+  async #performSync(draft, locale, valueMap, explicitRevision) {
     try {
-      const values = valueMap ?? getValueMapSnapshot(draft, locale);
-      const serialized = serializeContent({ draft, locale, valueMap: { ...values } });
+      const activeLocale = locale || draft.defaultLocale;
+      const values = valueMap ?? getValueMapSnapshot(draft, activeLocale);
+      const serialized = serializeContent({ draft, locale: activeLocale, valueMap: { ...values } });
+
+      const collectionName = draft.collection?.name || 'posts';
+      const sectionName = collectionName === 'drafts' ? 'posts' : collectionName;
 
       // Inject Hugo preview options: draft: false, fixed preview URL, and exclude from site lists
       const previewPayload = {
@@ -173,6 +226,7 @@ class ShadowDraftService {
         title: serialized.title || 'Aperçu du brouillon',
         slug: 'admin-preview',
         date: serialized.date || new Date().toISOString(),
+        type: sectionName,
         draft: false,
         build: {
           list: 'never',
@@ -188,7 +242,7 @@ class ShadowDraftService {
 
       const markdown = formatFrontMatter({ content: previewPayload, _file: fileConfig });
 
-      if (markdown === this.#lastSentContent) {
+      if (markdown === this.#lastSentContent && !explicitRevision) {
         return;
       }
 
@@ -196,7 +250,7 @@ class ShadowDraftService {
         return;
       }
 
-      const revision = Date.now();
+      const revision = explicitRevision || Date.now();
       const markdownWithRev = `${markdown}\n\n<span id="shadow-preview-rev" data-rev="${revision}" style="display:none"></span>\n`;
 
       this.syncing = true;
@@ -209,6 +263,7 @@ class ShadowDraftService {
       if (res.ok) {
         this.#lastSentContent = markdown;
         this.currentRevision = revision;
+        this.currentDraftId = draft.id || '';
         this.lastSync = Date.now();
       }
     } catch (err) {
@@ -220,8 +275,21 @@ class ShadowDraftService {
   }
 
   /**
-   * Delete shadow draft file on disk when closing or navigating away.
+   * Reset shadow draft state and clean server file when switching edited document.
    */
+  async reset() {
+    if (this.#timer) {
+      clearTimeout(this.#timer);
+      this.#timer = undefined;
+    }
+    this.#lastSentContent = '';
+    this.currentRevision = 0;
+    this.lastSync = 0;
+    this.currentDraftId = '';
+    this.syncing = false;
+    await this.clean();
+  }
+
   async clean() {
     if (!this.available || !this.#apiUrl) {
       return;

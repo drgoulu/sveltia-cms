@@ -17,6 +17,7 @@ import { normalizeContentMap } from '$lib/services/contents/draft/create/normali
 import { createProxy } from '$lib/services/contents/draft/create/proxy.svelte';
 import { getDefaultValues } from '$lib/services/contents/draft/defaults';
 import { resetCustomFieldValidation } from '$lib/services/contents/draft/validate/custom-fields';
+import { shadowDraft } from '$lib/services/contents/preview/shadow-draft.svelte';
 import { createState } from '$lib/services/utils/state.svelte';
 import { isPendingDeletion } from '$lib/services/workflow';
 
@@ -288,6 +289,9 @@ export const createDraft = ({ entryDraft, ...args }) => {
   if (!isPendingDeletion(originalEntry)) {
     restoreBackupIfNeeded({ draft });
   }
+
+  // Force generation of Hugo preview for the newly opened document
+  shadowDraft.forceSync(draft);
 
   return draft;
 };

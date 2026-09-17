@@ -78,6 +78,16 @@ describe('hugo shortcodes utilities', () => {
       expect(resolveHugoImagePath('images/pic.jpg')).toBe('/posts/images/pic.jpg');
       expect(resolveHugoImagePath('./images/pic.jpg')).toBe('/posts/images/pic.jpg');
     });
+
+    it('resolves relative path with collection from hash', () => {
+      // @ts-ignore
+      globalThis.window = /** @type {any} */ ({
+        location: { hash: '#/collections/quora/entries/2019/2019-03-18-test' },
+      });
+      expect(resolveHugoImagePath('./images/qimg.jpg')).toBe('/quora/2019/images/qimg.jpg');
+      // @ts-ignore
+      delete globalThis.window;
+    });
   });
 });
 

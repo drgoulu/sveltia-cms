@@ -60,11 +60,23 @@
     shadowDraft.checkAvailability();
   });
 
-  // Sync draft to Hugo shadow file whenever values change
+  let previousDraftId = /** @type {string | undefined} */ (undefined);
+
+  // Sync draft to Hugo shadow file whenever values change or draft switches
   $effect(() => {
-    if (entryDraft.current && shadowDraft.available && useHugoLivePreview && valueMap) {
+    const currentDraftId = entryDraft.current?.id;
+    const isNewDraft = currentDraftId !== previousDraftId;
+    if (isNewDraft) {
+      previousDraftId = currentDraftId;
+      if (entryDraft.current && useHugoLivePreview) {
+        shadowDraft.forceSync(entryDraft.current, locale);
+        return;
+      }
+    }
+
+    if (entryDraft.current && useHugoLivePreview && valueMap) {
       // getValueMapSnapshot tracks the proxy version reactively on every field edit
-      shadowDraft.scheduleSync(entryDraft.current, locale, valueMap);
+      shadowDraft.scheduleSync(entryDraft.current, locale, valueMap, false);
     }
   });
 
@@ -94,7 +106,7 @@
 {/snippet}
 
 {#if shadowDraft.available && useHugoLivePreview}
-  <HugoPreviewPane onSwitchToStandard={() => (useHugoLivePreview = false)} />
+  <HugoPreviewPane draftId={entryDraft.current?.id} onSwitchToStandard={() => (useHugoLivePreview = false)} />
 {:else}
   {#if shadowDraft.available}
     <div class="hugo-switch-bar">
