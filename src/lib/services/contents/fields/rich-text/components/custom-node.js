@@ -73,7 +73,10 @@ export const createCustomNodeClass = (componentDef) => {
   const inline = !isMultiLinePattern(pattern);
   const preview = toPreview?.({});
   const block = toBlock({});
-  const tagName = getTagName(preview, block);
+  // Hugo shortcodes are template directives ({{< ... >}}), not HTML elements.
+  // Never assign them a DOM tagName (e.g. from preview wrapper divs) so that pasted
+  // HTML (like <div> from Gemini or other tools) is not converted into empty shortcodes.
+  const tagName = componentName?.startsWith('hugo-') ? undefined : getTagName(preview, block);
 
   /**
    * Genetic custom node.

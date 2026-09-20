@@ -559,6 +559,22 @@ describe('createCustomNodeClass', () => {
       // tagName is undefined when preview is not a string, so no DOM conversion registered
       expect(Object.keys(importDOM).length).toBe(0);
     });
+
+    it('should not assign tagName or register importDOM for hugo shortcode components', () => {
+      const hugoGenericDef = {
+        ...mockComponentDef,
+        id: 'hugo-generic',
+        toPreview: () => '<div style="border: 1px dashed #ccc;">Preview</div>',
+        toBlock: () => '{{< generic >}}',
+      };
+
+      const CustomNode = createCustomNodeClass(hugoGenericDef);
+      const importDOM = CustomNode.importDOM();
+
+      expect(importDOM).toBeDefined();
+      expect(importDOM.div).toBeUndefined();
+      expect(Object.keys(importDOM).length).toBe(0);
+    });
   });
 
   describe('DOM import conversion', () => {

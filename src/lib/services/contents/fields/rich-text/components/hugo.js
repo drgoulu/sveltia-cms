@@ -272,7 +272,9 @@ export const HUGO_VIMEO_COMPONENT = {
  */
 const extractDailymotionId = (input) => {
   const str = String(input ?? '').trim();
-  const urlMatch = str.match(/(?:dailymotion\.com\/(?:video|embed\/video)\/|dai\.ly\/)([a-zA-Z0-9]+)/);
+  const urlMatch = str.match(
+    /(?:dailymotion\.com\/(?:video|embed\/video)\/|dai\.ly\/)([a-zA-Z0-9]+)/,
+  );
 
   if (urlMatch) return urlMatch[1];
 
@@ -483,8 +485,12 @@ export const HUGO_GENERIC_COMPONENT = {
     body: match[3] || '',
   }),
   toBlock: (obj) => {
-    const name = obj.name || '';
+    const name = obj.name?.trim() || '';
     const args = obj.args ? ` ${obj.args.trim()}` : '';
+
+    if (!name) {
+      return obj.body || '';
+    }
 
     if (obj.body !== undefined && obj.body !== '') {
       return `{{< ${name}${args} >}}\n${obj.body}\n{{< /${name} >}}`;
@@ -493,9 +499,13 @@ export const HUGO_GENERIC_COMPONENT = {
     return `{{< ${name}${args} >}}`;
   },
   toPreview: (obj) => {
-    const name = obj.name || '';
+    const name = obj.name?.trim() || '';
     const args = obj.args || '';
     const body = obj.body || '';
+
+    if (!name) {
+      return body ? escapeHtml(body) : '';
+    }
 
     return (
       '<div style="border:1px dashed #94a3b8;border-radius:6px;padding:10px 14px;margin:1em 0;background:#f8fafc;font-size:0.9em;">' +

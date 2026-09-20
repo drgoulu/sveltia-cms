@@ -69,7 +69,9 @@ describe('hugo shortcodes utilities', () => {
 
   describe('resolveHugoImagePath', () => {
     it('keeps absolute or remote URLs untouched', () => {
-      expect(resolveHugoImagePath('https://example.com/pic.jpg')).toBe('https://example.com/pic.jpg');
+      expect(resolveHugoImagePath('https://example.com/pic.jpg')).toBe(
+        'https://example.com/pic.jpg',
+      );
       expect(resolveHugoImagePath('/posts/2012/images/pic.jpg')).toBe('/posts/2012/images/pic.jpg');
       expect(resolveHugoImagePath('blob:http://localhost/123')).toBe('blob:http://localhost/123');
     });
@@ -170,13 +172,19 @@ describe('hugo components definitions', () => {
 
       const preview = HUGO_DAILYMOTION_COMPONENT.toPreview(props);
       expect(preview).toContain('dailymotion.com/embed/video/x8m4abc');
-      expect(HUGO_DAILYMOTION_COMPONENT.toBlock({ id: 'x8m4abc' })).toBe('{{< dailymotion "x8m4abc" >}}');
+      expect(HUGO_DAILYMOTION_COMPONENT.toBlock({ id: 'x8m4abc' })).toBe(
+        '{{< dailymotion "x8m4abc" >}}',
+      );
     });
 
     it('extracts ID from full dailymotion URL', () => {
-      const preview = HUGO_DAILYMOTION_COMPONENT.toPreview({ id: 'https://www.dailymotion.com/video/x9xyz12' });
+      const preview = HUGO_DAILYMOTION_COMPONENT.toPreview({
+        id: 'https://www.dailymotion.com/video/x9xyz12',
+      });
       expect(preview).toContain('dailymotion.com/embed/video/x9xyz12');
-      expect(HUGO_DAILYMOTION_COMPONENT.toBlock({ id: 'https://dai.ly/x9xyz12' })).toBe('{{< dailymotion "x9xyz12" >}}');
+      expect(HUGO_DAILYMOTION_COMPONENT.toBlock({ id: 'https://dai.ly/x9xyz12' })).toBe(
+        '{{< dailymotion "x9xyz12" >}}',
+      );
     });
   });
 
@@ -262,6 +270,17 @@ describe('hugo components definitions', () => {
       expect('{{< youtube 12345 >}}'.match(HUGO_GENERIC_COMPONENT.pattern)).toBeNull();
       expect('{{< /highlight >}}'.match(HUGO_GENERIC_COMPONENT.pattern)).toBeNull();
     });
+
+    it('handles empty or missing name safely without generating empty shortcodes', () => {
+      expect(HUGO_GENERIC_COMPONENT.toBlock({})).toBe('');
+      expect(HUGO_GENERIC_COMPONENT.toBlock({ name: '' })).toBe('');
+      expect(HUGO_GENERIC_COMPONENT.toBlock({ name: '   ' })).toBe('');
+      expect(HUGO_GENERIC_COMPONENT.toBlock({ name: '', body: 'some content' })).toBe(
+        'some content',
+      );
+      expect(HUGO_GENERIC_COMPONENT.toPreview({})).toBe('');
+      expect(HUGO_GENERIC_COMPONENT.toPreview({ body: 'fallback text' })).toBe('fallback text');
+    });
   });
 
   describe('shortcodes collapsed by default', () => {
@@ -272,4 +291,3 @@ describe('hugo components definitions', () => {
     });
   });
 });
-
