@@ -1,18 +1,25 @@
 <script>
   import { locale as appLocale } from '@sveltia/i18n';
-  import { GridCell, GridRow, TruncatedText } from '@sveltia/ui';
+  import { Checkbox, GridCell, GridRow, TruncatedText } from '@sveltia/ui';
   import { sleep } from '@sveltia/utils/misc';
 
   import Image from '$lib/components/assets/shared/image.svelte';
   import { goto } from '$lib/services/app/navigation';
   import { getCollectionLabel } from '$lib/services/contents/collection';
-  import { getListedCollections } from '$lib/services/contents/collection/entries';
+  import {
+    getListedCollections,
+    selectedEntries,
+    selectedEntryIdSet,
+  } from '$lib/services/contents/collection/entries';
   import {
     getCollectionFileLabel,
     getCollectionFilesByEntry,
   } from '$lib/services/contents/collection/files';
   import { getEntryThumbnail } from '$lib/services/contents/entry/assets';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
+  import { env } from '$lib/services/user/env.svelte';
+  import { toggleListItem } from '$lib/services/utils/array';
+  import { openAuthoring } from '$lib/services/workflow/open-authoring';
 
   /**
    * @import {
@@ -43,10 +50,21 @@
 
   const { entry, locale, keyPath } = $derived(result);
   const { subPath } = $derived(entry);
+
+  /**
+   * Update the entry selection.
+   * @param {boolean} selected Whether the current entry item is selected.
+   */
+  const updateSelection = (selected) => {
+    selectedEntries.current = toggleListItem(selectedEntries.current, entry, selected);
+  };
 </script>
 
 {#snippet resultRow(/** @type {RowArgs} */ { collection, collectionFile })}
   <GridRow
+    onChange={(event) => {
+      updateSelection(event.detail.selected);
+    }}
     onclick={() => {
       goto(`/collections/${collection.name}/entries/${collectionFile?.name || subPath}`, {
         state: { highlight: { locale, keyPath } },
@@ -54,6 +72,18 @@
       });
     }}
   >
+    {#if !openAuthoring.current && !(env.isSmallScreen || env.isMediumScreen) && collection._type === 'entry'}
+      <GridCell class="checkbox">
+        <Checkbox
+          role="none"
+          tabindex="-1"
+          checked={selectedEntryIdSet.current.has(entry.id)}
+          onChange={({ detail: { checked } }) => {
+            updateSelection(checked);
+          }}
+        />
+      </GridCell>
+    {/if}
     <GridCell class="image">
       {#if collection._type === 'entry'}
         {#await getEntryThumbnail(collection, entry) then src}

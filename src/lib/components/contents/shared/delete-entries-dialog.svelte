@@ -9,9 +9,10 @@
     UPDATE_TOAST_DEFAULT_STATE,
   } from '$lib/services/contents/collection/data';
   import { deleteEntries } from '$lib/services/contents/collection/data/delete';
-  import { selectedEntries } from '$lib/services/contents/collection/entries';
+  import { getListedCollections, selectedEntries } from '$lib/services/contents/collection/entries';
   import { listedEntries, listedUnpublishedEntries } from '$lib/services/contents/collection/view';
   import { getAssociatedAssets } from '$lib/services/contents/entry/assets';
+  import { entrySearchResults } from '$lib/services/search/entries';
   import { workflowEnabled } from '$lib/services/workflow';
   import { deleteWorkflowEntries, discardWorkflowEntries } from '$lib/services/workflow/save';
 
@@ -46,7 +47,8 @@
    * @returns {Asset[]} Assets, or an empty list unless the collection stores them with the entry.
    */
   const getEntryAssets = (entry) => {
-    const collectionName = selectedCollection.current?.name;
+    const collectionName =
+      selectedCollection.current?.name ?? getListedCollections(entry)[0]?.name;
 
     return collectionName && getAssetFolder({ collectionName })?.entryRelative
       ? getAssociatedAssets({ entry, collectionName, relative: true })
@@ -54,21 +56,11 @@
   };
 
   const associatedAssets = $derived.by(() => {
-    const collectionName = selectedCollection.current?.name;
-
-    // Assets committed alongside an unpublished entry don’t exist on the configured branch yet, so
-    // only look at the published entries here
-    if (
-      publishedEntries.length &&
-      collectionName &&
-      getAssetFolder({ collectionName })?.entryRelative
-    ) {
-      return publishedEntries.flatMap((entry) =>
-        getAssociatedAssets({ entry, collectionName, relative: true }),
-      );
+    if (!publishedEntries.length) {
+      return [];
     }
 
-    return [];
+    return publishedEntries.flatMap((entry) => getEntryAssets(entry));
   });
 
   /**
@@ -82,14 +74,21 @@
       }
 
       if (publishedEntries.length) {
-        if (workflowEnabled.current && selectedCollection.current) {
+        const canUseWorkflow =
+          workflowEnabled.current &&
+          (!!selectedCollection.current ||
+            publishedEntries.every((entry) => !!getListedCollections(entry)[0]));
+
+        if (canUseWorkflow) {
           // Committing the removals straight to the configured branch would bypass review and be
           // rejected outright when the branch is protected
           // @see https://github.com/decaporg/decap-cms/issues/6610
           await deleteWorkflowEntries(
             publishedEntries.map((entry) => ({
               entry,
-              collection: /** @type {any} */ (selectedCollection.current),
+              collection: /** @type {any} */ (
+                selectedCollection.current ?? getListedCollections(entry)[0]
+              ),
               assets: getEntryAssets(entry),
             })),
           );
@@ -126,10 +125,12 @@
     await deleteSelectedEntries();
   }}
 >
+  {@const totalCount =
+    listedEntries.current.length + listedUnpublishedEntries.current.length ||
+    entrySearchResults.current.length}
   {@const all =
     selectedEntries.current.length > 1 &&
-    selectedEntries.current.length ===
-      listedEntries.current.length + listedUnpublishedEntries.current.length}
+    selectedEntries.current.length === totalCount}
   {_(
     associatedAssets.length
       ? all

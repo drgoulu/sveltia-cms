@@ -9,6 +9,7 @@ import {
   contentUpdatesToast,
   UPDATE_TOAST_DEFAULT_STATE,
 } from '$lib/services/contents/collection/data';
+import { getListedCollections } from '$lib/services/contents/collection/entries';
 import { buildRenumberChanges } from '$lib/services/contents/collection/entries/reorder';
 import { getPreviousSha } from '$lib/services/contents/draft/save/changes';
 import { getRepositoryDatabase } from '$lib/services/utils/database';
@@ -79,7 +80,8 @@ export const deleteEntries = async (entries, assets = []) => {
   // entries into the same commit so that delete + renumber is one atomic operation. The same
   // file-cache handle is reused to avoid opening a second IndexedDB connection.
   const collection = /** @type {InternalEntryCollection | undefined} */ (
-    selectedCollection.current
+    selectedCollection.current ??
+      (entries.length ? getListedCollections(entries[0])[0] : undefined)
   );
 
   const { changes: renumberChanges, savingEntries: renumberSavingEntries } =
@@ -95,7 +97,7 @@ export const deleteEntries = async (entries, assets = []) => {
     savingEntries: renumberSavingEntries,
     options: {
       commitType: 'delete',
-      collection: selectedCollection.current,
+      collection,
     },
   });
 
