@@ -49,7 +49,7 @@
       let cancelled = false;
 
       const refresh = async () => {
-        const maxAttempts = 60;
+        const maxAttempts = 120;
         for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
           if (cancelled) return;
           try {

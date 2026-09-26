@@ -635,10 +635,39 @@ build:
   };
 };
 
+/**
+ * Override Sveltia UI's InsertLinkButton with our enhanced version that includes
+ * internal site search and automatic URL suggestion based on selected text.
+ * @returns {import('vite').Plugin} Vite plugin.
+ */
+const overrideInsertLinkPlugin = () => {
+  const targetPath = path.resolve(
+    'src/lib/components/contents/details/fields/rich-text/insert-link-button.svelte',
+  );
+
+  return {
+    name: 'override-insert-link-button',
+    enforce: 'pre',
+    resolveId(id, importer) {
+      if (
+        (importer &&
+          importer.includes('text-editor/toolbar/text-editor-toolbar.svelte') &&
+          id.endsWith('insert-link-button.svelte')) ||
+        id.includes('text-editor/toolbar/insert-link-button.svelte')
+      ) {
+        return targetPath;
+      }
+      return null;
+    },
+  };
+};
+
 export default defineConfig({
   resolve: {
     alias: {
       $lib: path.resolve('./src/lib/'),
+      '@lexical/link': path.resolve('./node_modules/@lexical/link'),
+      '@lexical/utils': path.resolve('./node_modules/@lexical/utils'),
     },
     extensions: ['.js', '.svelte'],
     // Vitest doesn’t use the `browser` condition by default, so the `svelte` package would resolve
@@ -703,6 +732,7 @@ export default defineConfig({
     outDir: 'package/dist',
   },
   plugins: [
+    overrideInsertLinkPlugin(),
     shadowDraftPlugin(),
     yamlToJS(),
     svelte({
