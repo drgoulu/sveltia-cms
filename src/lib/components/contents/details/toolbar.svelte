@@ -47,7 +47,6 @@
   import { validateDraft } from '$lib/services/contents/draft/validate';
   import { activeInlineEditors, copyFromLocaleToast } from '$lib/services/contents/editor';
   import { entryEditorSettings } from '$lib/services/contents/editor/settings';
-  import { getAssociatedAssets } from '$lib/services/contents/entry/assets';
   import { getEntrySummary } from '$lib/services/contents/entry/summary';
   import { getLocaleLabel } from '$lib/services/contents/i18n';
   import { DEFAULT_I18N_CONFIG } from '$lib/services/contents/i18n/config';
@@ -157,11 +156,9 @@
   const busy = $derived(saving || deleting || duplicating);
   const controlsDisabled = $derived(disabled || busy);
   const modified = $derived(isNew || entryDraft.modified);
-  const associatedAssets = $derived(
-    collectionName && originalEntry && getAssetFolder({ collectionName, fileName })?.entryRelative
-      ? getAssociatedAssets({ entry: originalEntry, collectionName, fileName, relative: true })
-      : [],
-  );
+  // Do not delete media files when deleting an entry or draft (they may be shared)
+  /** @type {Asset[]} */
+  const associatedAssets = [];
   // Look the entry up in the store rather than using `originalEntry` directly, so the status button
   // stays in sync when the status is changed elsewhere, e.g. on the Editorial Workflow page
   const unpublishedEntry = $derived(

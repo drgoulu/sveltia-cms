@@ -11,7 +11,6 @@
   import { deleteEntries } from '$lib/services/contents/collection/data/delete';
   import { getListedCollections, selectedEntries } from '$lib/services/contents/collection/entries';
   import { listedEntries, listedUnpublishedEntries } from '$lib/services/contents/collection/view';
-  import { getAssociatedAssets } from '$lib/services/contents/entry/assets';
   import { entrySearchResults } from '$lib/services/search/entries';
   import { workflowEnabled } from '$lib/services/workflow';
   import { deleteWorkflowEntries, discardWorkflowEntries } from '$lib/services/workflow/save';
@@ -42,26 +41,13 @@
   );
 
   /**
-   * Get the assets stored alongside the given entry, which are removed with it.
-   * @param {Entry} entry Entry to look at.
-   * @returns {Asset[]} Assets, or an empty list unless the collection stores them with the entry.
+   * Do not delete media files when deleting entries or drafts (they may be shared).
+   * @type {(entry: Entry) => Asset[]}
    */
-  const getEntryAssets = (entry) => {
-    const collectionName =
-      selectedCollection.current?.name ?? getListedCollections(entry)[0]?.name;
+  const getEntryAssets = () => [];
 
-    return collectionName && getAssetFolder({ collectionName })?.entryRelative
-      ? getAssociatedAssets({ entry, collectionName, relative: true })
-      : [];
-  };
-
-  const associatedAssets = $derived.by(() => {
-    if (!publishedEntries.length) {
-      return [];
-    }
-
-    return publishedEntries.flatMap((entry) => getEntryAssets(entry));
-  });
+  /** @type {Asset[]} */
+  const associatedAssets = [];
 
   /**
    * Delete the selected entries, discarding any unpublished draft rather than committing a deletion
